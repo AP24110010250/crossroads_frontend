@@ -1,0 +1,176 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=NTR&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  background-color: #FAF6EE; /* Ivory Champagne */
+}
+
+/* Lenis Smooth Scroll Configuration */
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis-scrolling iframe {
+  pointer-events: none;
+}
+
+/* Premium Brass & Espresso Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FAF6EE;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #B58E3D; /* Antique Brass Gold */
+  border: 2px solid #FAF6EE;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #A21C26; /* Royal Crimson Red */
+}
+
+/* Global Styles */
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif;
+  background-color: #FAF6EE;
+  color: #2A1A12; /* Deep Espresso */
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Playfair Display', serif;
+  color: #2A1A12;
+  letter-spacing: -0.01em;
+}
+
+/* GPU Acceleration */
+.gpu-accelerated {
+  will-change: transform, opacity;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Cinematic Film Grain Overlay (Light Overlay) */
+.film-grain {
+  position: relative;
+}
+
+.film-grain::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Light-Themed Luxury Glassmorphism */
+.glass-card {
+  background: rgba(255, 253, 246, 0.8);
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  border: 1px solid rgba(42, 26, 18, 0.08);
+}
+
+.glass-card-gold {
+  background: rgba(243, 237, 224, 0.9); /* Silk Sand translucent */
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(181, 142, 61, 0.2); /* Antique Brass tint */
+}
+
+/* Soft gold glow utilities */
+.gold-glow {
+  box-shadow: 0 4px 20px rgba(181, 142, 61, 0.08);
+}
+
+.gold-glow-hover:hover {
+  box-shadow: 0 8px 30px rgba(181, 142, 61, 0.25);
+  transition: box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Steam particle simulation styles */
+.steam-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.steam-particle {
+  position: absolute;
+  bottom: 15%;
+  background: radial-gradient(circle, rgba(42, 26, 18, 0.05) 0%, rgba(42, 26, 18, 0) 70%);
+  border-radius: 50%;
+  filter: blur(3px);
+  pointer-events: none;
+  animation: riseSteam 6s ease-out infinite;
+}
+
+@keyframes riseSteam {
+  0% {
+    transform: translateY(10px) scale(0.6) rotate(0deg);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.3;
+  }
+  100% {
+    transform: translateY(-80px) scale(1.6) rotate(15deg);
+    opacity: 0;
+  }
+}
+
+/* Custom Text masking reveals */
+.mask-text-reveal {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+}
+
+/* Golden text styling */
+.text-gold-gradient {
+  background: linear-gradient(135deg, #2A1A12 0%, #B58E3D 60%, #9A6F1D 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-red-gradient {
+  background: linear-gradient(135deg, #2A1A12 0%, #A21C26 60%, #5F0B11 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Hide default horizontal scrollbars */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
