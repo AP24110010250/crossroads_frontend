@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Link } from 'react-router-dom';
+import { getImageUrl } from '../../utils/imageHelper';
 import { ArrowDown, Calendar, ArrowRight } from 'lucide-react';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -98,7 +99,7 @@ const HomeHero = () => {
       {/* Background Image Parallax with soft champagne vignette overlay */}
       <div className="absolute inset-0 w-full h-full opacity-[0.07] pointer-events-none">
         <img 
-          src="/placeholders/hero-interior.webp" 
+          src={getImageUrl('/placeholders/hero-interior.webp')} 
           alt="Vintage Crossroads Ambience" 
           className="w-full h-full object-cover scale-105"
         />
@@ -155,7 +156,7 @@ const HomeHero = () => {
             {/* Dish 1: Ulavacharu Chicken Biryani */}
             <div ref={dish1Ref} className="flex flex-col items-center text-center max-w-[340px] group steam-container gpu-accelerated">
               <div className="w-48 h-48 md:w-64 md:h-64 rounded-full overflow-hidden border-2 border-brand-gold/30 gold-glow relative bg-brand-beige">
-                <img src="/placeholders/ulavacharu-biryani.webp" alt="Ulavacharu Chicken Biryani" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <img src={getImageUrl('/placeholders/ulavacharu-biryani.webp')} alt="Ulavacharu Chicken Biryani" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 {/* Steam particles */}
                 <div className="steam-particle" style={{left: '30%', width: '15px', height: '15px', animationDelay: '0s'}} />
                 <div className="steam-particle" style={{left: '50%', width: '25px', height: '25px', animationDelay: '1.5s'}} />
@@ -167,7 +168,7 @@ const HomeHero = () => {
             {/* Dish 2: Andhra Thali */}
             <div ref={dish2Ref} className="flex flex-col items-center text-center max-w-[340px] group gpu-accelerated">
               <div className="w-44 h-44 md:w-60 md:h-60 rounded-full overflow-hidden border-2 border-brand-gold/30 gold-glow relative bg-brand-beige">
-                <img src="/placeholders/andhra-thali.webp" alt="Andhra Thali" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <img src={getImageUrl('/placeholders/andhra-thali.webp')} alt="Andhra Thali" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
               </div>
               <h4 className="font-playfair text-2xl md:text-3xl font-extrabold text-brand-brown mt-4">Andhra Thali</h4>
               <span className="text-sm text-brand-red uppercase tracking-wider font-extrabold mt-1">24 Items Unlimited Feast</span>
@@ -176,7 +177,7 @@ const HomeHero = () => {
             {/* Dish 3: Ghee Podi Idly */}
             <div ref={dish3Ref} className="flex flex-col items-center text-center max-w-[340px] group steam-container gpu-accelerated">
               <div className="w-40 h-40 md:w-56 md:h-56 rounded-full overflow-hidden border-2 border-brand-gold/30 gold-glow relative bg-brand-beige">
-                <img src="/placeholders/ghee-podi-idly.webp" alt="Ghee Podi Idly" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <img src={getImageUrl('/placeholders/ghee-podi-idly.webp')} alt="Ghee Podi Idly" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 <div className="steam-particle" style={{left: '40%', width: '10px', height: '10px', animationDelay: '0.5s'}} />
                 <div className="steam-particle" style={{left: '60%', width: '15px', height: '15px', animationDelay: '2.5s'}} />
               </div>

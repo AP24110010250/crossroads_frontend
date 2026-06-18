@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '../components/sections/Navbar';
 import Footer from '../components/sections/Footer';
 import SmoothScroll from '../components/animations/SmoothScroll';
+import { getImageUrl } from '../utils/imageHelper';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { 
@@ -709,7 +710,7 @@ const Admin = () => {
                             <div key={item._id} className="flex gap-4 p-5 rounded-lg bg-white border border-brand-brown/10 relative glass-card hover:border-brand-gold/40 transition-colors shadow-sm">
                               {/* Thumbnail */}
                               <div className="w-20 h-20 rounded overflow-hidden shrink-0 bg-brand-beige border border-brand-brown/10">
-                                <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                <img src={getImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" />
                               </div>
                               <div className="flex flex-col space-y-1 flex-grow pr-16 text-sm text-brand-brown">
                                 <div className="flex items-center gap-1.5 flex-wrap">
@@ -860,7 +861,7 @@ const Admin = () => {
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                           {galleryItems.map(g => (
                             <div key={g._id} className="relative aspect-video rounded overflow-hidden group border border-brand-brown/10 bg-white shadow-sm hover:shadow-md transition-shadow">
-                              <img src={g.image} alt={g.title} className="w-full h-full object-cover" />
+                              <img src={getImageUrl(g.image)} alt={g.title} className="w-full h-full object-cover" />
                               <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-3.5 z-10 text-brand-lightBg">
                                 <span className="text-xs uppercase tracking-wider text-brand-gold font-bold">{g.category}</span>
                                 <div className="flex items-center justify-between gap-2">

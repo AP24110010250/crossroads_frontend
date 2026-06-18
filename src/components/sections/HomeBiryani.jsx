@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, Check } from 'lucide-react';
+import { getImageUrl } from '../../utils/imageHelper';
 
 const HomeBiryani = () => {
   const steps = [
@@ -72,7 +73,7 @@ const HomeBiryani = () => {
               {/* Photo Frame */}
               <div className="w-full h-64 overflow-hidden relative border-b border-brand-brown/5">
                 <img 
-                  src={step.image} 
+                  src={getImageUrl(step.image)} 
                   alt={step.title} 
                   className="w-full h-full object-cover filter brightness-[0.85] sepia-[0.15] group-hover:scale-103 transition-transform duration-500" 
                 />
@@ -126,7 +127,7 @@ const HomeBiryani = () => {
           <div className="w-full lg:w-2/5 flex items-center justify-center z-10">
             <div className="relative w-[280px] h-[280px] md:w-[380px] md:h-[380px] rounded-lg overflow-hidden border-2 border-brand-gold/25 gold-glow bg-brand-beige">
               <img 
-                src="/placeholders/ulavacharu-biryani.webp" 
+                src={getImageUrl('/placeholders/ulavacharu-biryani.webp')} 
                 alt="Hot Dum Biryani Clay Pot" 
                 className="w-full h-full object-cover" 
               />

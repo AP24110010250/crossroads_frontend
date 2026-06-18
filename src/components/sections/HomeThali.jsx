@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Check, ChevronRight } from 'lucide-react';
+import { getImageUrl } from '../../utils/imageHelper';
 
 const HomeThali = () => {
   const [hoveredIdx, setHoveredIdx] = useState(0); // Default to first item (Rice)
@@ -77,7 +78,7 @@ const HomeThali = () => {
             {/* The Platter Base */}
             <div className="relative w-[340px] h-[340px] md:w-[550px] md:h-[550px] rounded-full overflow-hidden border-4 border-brand-gold/40 gold-glow bg-brand-beige">
               <img 
-                src="/placeholders/andhra-thali.webp" 
+                src={getImageUrl('/placeholders/andhra-thali.webp')} 
                 alt="Andhra Thali Platter Map" 
                 className="w-full h-full object-cover scale-102 filter brightness-[0.93] contrast-105" 
               />

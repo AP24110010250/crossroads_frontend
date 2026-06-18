@@ -3,6 +3,7 @@ import Navbar from '../components/sections/Navbar';
 import Footer from '../components/sections/Footer';
 import SmoothScroll from '../components/animations/SmoothScroll';
 import { motion } from 'framer-motion';
+import { getImageUrl } from '../utils/imageHelper';
 
 const About = () => {
   return (
@@ -13,7 +14,7 @@ const About = () => {
         {/* Cinematic Header */}
         <section className="relative py-24 bg-brand-beige overflow-hidden flex items-center justify-center text-center px-6">
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
-            <img src="/placeholders/hero-interior.webp" alt="Old Vijayawada Restaurant" className="w-full h-full object-cover" />
+            <img src={getImageUrl('/placeholders/hero-interior.webp')} alt="Old Vijayawada Restaurant" className="w-full h-full object-cover" />
           </div>
           
           <div className="relative z-10 flex flex-col items-center max-w-3xl">
@@ -51,7 +52,7 @@ const About = () => {
             </div>
             <div className="w-full lg:w-1/2 flex items-center justify-center">
               <div className="relative w-full max-w-lg aspect-[4/3] rounded-lg overflow-hidden border border-brand-gold/30 gold-glow bg-brand-beige">
-                <img src="/placeholders/family-dining.webp" alt="Family Legacy Dining" className="w-full h-full object-cover filter brightness-[0.93] sepia-[0.1]" />
+                <img src={getImageUrl('/placeholders/family-dining.webp')} alt="Family Legacy Dining" className="w-full h-full object-cover filter brightness-[0.93] sepia-[0.1]" />
                 <div className="absolute inset-0 bg-gradient-to-t from-brand-brown/30 to-transparent" />
               </div>
             </div>
@@ -81,7 +82,7 @@ const About = () => {
             </div>
             <div className="w-full lg:w-1/2 flex items-center justify-center z-10">
               <div className="relative w-full max-w-lg aspect-[4/3] rounded-lg overflow-hidden border border-brand-gold/30 gold-glow bg-brand-lightBg">
-                <img src="/placeholders/andhra-thali.webp" alt="Traditional Andhra Thali Platter" className="w-full h-full object-cover filter brightness-[0.93]" />
+                <img src={getImageUrl('/placeholders/andhra-thali.webp')} alt="Traditional Andhra Thali Platter" className="w-full h-full object-cover filter brightness-[0.93]" />
                 <div className="absolute inset-0 bg-gradient-to-t from-brand-brown/20 to-transparent" />
               </div>
             </div>

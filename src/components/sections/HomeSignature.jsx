@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Sparkles, ArrowRight } from 'lucide-react';
+import { getImageUrl } from '../../utils/imageHelper';
 
 const HomeSignature = () => {
   const dishes = [
@@ -108,7 +109,7 @@ const HomeSignature = () => {
               {/* Image Container */}
               <div className="w-full h-72 md:h-80 overflow-hidden relative border-b border-brand-brown/5">
                 <img 
-                  src={dish.image} 
+                  src={getImageUrl(dish.image)} 
                   alt={dish.name} 
                   className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-700" 
                 />

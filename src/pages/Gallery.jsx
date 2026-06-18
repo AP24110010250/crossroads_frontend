@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '../components/sections/Navbar';
 import Footer from '../components/sections/Footer';
 import SmoothScroll from '../components/animations/SmoothScroll';
+import { getImageUrl } from '../utils/imageHelper';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { RefreshCw, X, ArrowLeft, ArrowRight, Maximize2 } from 'lucide-react';
@@ -85,7 +86,7 @@ const Gallery = () => {
         {/* Hero Banner */}
         <section className="relative py-20 bg-brand-beige border-b border-brand-brown/10 flex items-center justify-center text-center px-6">
           <div className="absolute inset-0 opacity-10 pointer-events-none">
-            <img src="/placeholders/hero-interior.webp" alt="Background" className="w-full h-full object-cover filter blur-[2px]" />
+            <img src={getImageUrl('/placeholders/hero-interior.webp')} alt="Background" className="w-full h-full object-cover filter blur-[2px]" />
             <div className="absolute inset-0 bg-[#FAF6EE]" />
           </div>
           
@@ -154,11 +155,11 @@ const Gallery = () => {
                     </div>
 
                     <img 
-                      src={item.image} 
+                      src={getImageUrl(item.image)} 
                       alt={item.title} 
                       className="w-full h-full object-cover transform group-hover:scale-[1.03] transition-transform duration-500"
                       onError={(e) => {
-                        e.target.src = '/placeholders/hero-interior.webp';
+                        e.target.src = getImageUrl('/placeholders/hero-interior.webp');
                       }}
                     />
                   </motion.div>
@@ -211,7 +212,7 @@ const Gallery = () => {
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ duration: 0.3 }}
-                  src={filteredItems[lightboxIndex].image}
+                  src={getImageUrl(filteredItems[lightboxIndex].image)}
                   alt={filteredItems[lightboxIndex].title}
                   className="max-w-full max-h-[70vh] object-contain rounded border border-white/10 shadow-2xl"
                 />

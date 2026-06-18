@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Navbar from '../components/sections/Navbar';
 import Footer from '../components/sections/Footer';
 import SmoothScroll from '../components/animations/SmoothScroll';
+import { getImageUrl } from '../utils/imageHelper';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { Sparkles, Search, RefreshCw, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
@@ -163,7 +164,7 @@ const Menu = () => {
         {/* Cinematic Header */}
         <section className="relative py-20 bg-brand-beige border-b border-brand-brown/5 overflow-hidden flex items-center justify-center text-center px-6">
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
-            <img src="/placeholders/hero-food.webp" alt="Background" className="w-full h-full object-cover" />
+            <img src={getImageUrl('/placeholders/hero-food.webp')} alt="Background" className="w-full h-full object-cover" />
           </div>
           
           <div className="relative z-10 flex flex-col items-center max-w-3xl">
@@ -302,10 +303,10 @@ const Menu = () => {
                             }}
                           >
                             <img 
-                              src={dish.image} 
+                              src={getImageUrl(dish.image)} 
                               alt={dish.name} 
                               className="w-full h-full object-cover pointer-events-none"
-                              onError={(e) => { e.target.src = '/placeholders/hero-food.webp'; }}
+                              onError={(e) => { e.target.src = getImageUrl('/placeholders/hero-food.webp'); }}
                             />
                             <div className="absolute inset-0 bg-gradient-to-tr from-black/20 via-transparent to-white/10" />
                           </div>
@@ -428,10 +429,10 @@ const Menu = () => {
                     {/* Dish Image */}
                     <div className="h-56 overflow-hidden relative bg-brand-beige">
                       <img 
-                        src={dish.image} 
+                        src={getImageUrl(dish.image)} 
                         alt={dish.name} 
                         className="w-full h-full object-cover filter brightness-95"
-                        onError={(e) => { e.target.src = '/placeholders/hero-food.webp'; }}
+                        onError={(e) => { e.target.src = getImageUrl('/placeholders/hero-food.webp'); }}
                       />
                       
                       {/* Veg indicator badge in image corner */}

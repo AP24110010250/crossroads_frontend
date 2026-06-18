@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Award, Sparkles, MapPin } from 'lucide-react';
+import { getImageUrl } from '../../utils/imageHelper';
 
 const HomeTimeline = () => {
   const timelineEvents = [
@@ -104,7 +105,7 @@ const HomeTimeline = () => {
 
                     <div className="w-full h-64 rounded overflow-hidden mb-4 border border-brand-brown/5">
                       <img 
-                        src={event.image} 
+                        src={getImageUrl(event.image)} 
                         alt={event.title} 
                         className="w-full h-full object-cover filter brightness-95 hover:scale-103 transition-transform duration-500" 
                       />

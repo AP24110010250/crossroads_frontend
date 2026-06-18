@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { getImageUrl } from '../../utils/imageHelper';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -109,7 +110,7 @@ const HomeTollywood = () => {
               {/* Photo Frame */}
               <div className="w-full h-48 md:h-72 overflow-hidden relative border border-zinc-800 rounded bg-black">
                 <img 
-                  src={item.image} 
+                  src={getImageUrl(item.image)} 
                   alt={item.title} 
                   className="w-full h-full object-cover filter sepia-[0.25] brightness-75 hover:scale-105 transition-transform duration-500 pointer-events-none" 
                 />

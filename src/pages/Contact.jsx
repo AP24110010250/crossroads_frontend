@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Navbar from '../components/sections/Navbar';
 import Footer from '../components/sections/Footer';
 import SmoothScroll from '../components/animations/SmoothScroll';
+import { getImageUrl } from '../utils/imageHelper';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Phone, Clock, Mail, Send, CheckCircle2, ExternalLink } from 'lucide-react';
 
@@ -64,7 +65,7 @@ const Contact = () => {
         {/* Hero Section */}
         <section className="relative py-20 bg-brand-beige border-b border-brand-brown/5 flex items-center justify-center text-center px-6">
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
-            <img src="/placeholders/family-dining.webp" alt="Background" className="w-full h-full object-cover" />
+            <img src={getImageUrl('/placeholders/family-dining.webp')} alt="Background" className="w-full h-full object-cover" />
           </div>
           
           <div className="relative z-10 flex flex-col items-center max-w-3xl">

@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Phone, Clock, ExternalLink } from 'lucide-react';
+import { getImageUrl } from '../../utils/imageHelper';
 
 const HomeBranches = () => {
   const branches = [
@@ -75,7 +76,7 @@ const HomeBranches = () => {
               {/* Image segment */}
               <div className="w-full sm:w-2/5 h-52 sm:h-auto overflow-hidden relative min-h-[220px]">
                 <img 
-                  src={b.image} 
+                  src={getImageUrl(b.image)} 
                   alt={b.name} 
                   className="w-full h-full object-cover filter brightness-95 hover:scale-103 transition-transform duration-500" 
                 />

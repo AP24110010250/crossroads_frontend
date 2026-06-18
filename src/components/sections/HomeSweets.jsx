@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Sparkles, Check, ArrowRight } from 'lucide-react';
+import { getImageUrl } from '../../utils/imageHelper';
 
 const HomeSweets = () => {
   const sweets = [
@@ -84,7 +85,7 @@ const HomeSweets = () => {
             transition={{ duration: 0.5 }}
           >
             <img 
-              src="/placeholders/sweets-counter.webp" 
+              src={getImageUrl('/placeholders/sweets-counter.webp')} 
               alt="Traditional Sweets Counter" 
               className="w-full h-full object-cover filter brightness-95 group-hover:scale-103 transition-transform duration-700" 
             />
