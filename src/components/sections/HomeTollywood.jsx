@@ -1,42 +1,20 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { getImageUrl } from '../../utils/imageHelper';
+import axios from 'axios';
 
 gsap.registerPlugin(ScrollTrigger);
 
 const HomeTollywood = () => {
   const triggerRef = useRef(null);
   const filmstripRef = useRef(null);
+  const [galleryItems, setGalleryItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const trigger = triggerRef.current;
-    const filmstrip = filmstripRef.current;
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-    const scrollWidth = filmstrip.scrollWidth - window.innerWidth;
-
-    const pin = gsap.fromTo(filmstrip,
-      { x: 0 },
-      {
-        x: -scrollWidth,
-        ease: "none",
-        scrollTrigger: {
-          trigger: trigger,
-          pin: true,
-          scrub: 1,
-          start: "top top",
-          end: `+=${scrollWidth}`,
-          invalidateOnRefresh: true
-        }
-      }
-    );
-
-    return () => {
-      pin.scrollTrigger?.kill();
-    };
-  }, []);
-
-  const galleryItems = [
+  const fallbackItems = [
     {
       title: "Classic Cinema Wall",
       desc: "Nostalgic framed posters of vintage Telugu films.",
@@ -63,6 +41,77 @@ const HomeTollywood = () => {
       image: "/placeholders/sweets-counter.webp"
     }
   ];
+
+  useEffect(() => {
+    const fetchTollywoodStarred = async () => {
+      try {
+        setLoading(true);
+        const res = await axios.get(`${API_URL}/gallery`);
+        if (res.data.success) {
+          const starredTollywood = res.data.data.filter(
+            item => item.isStarred && item.category === 'Tollywood Wall'
+          );
+          if (starredTollywood.length >= 5) {
+            setGalleryItems(starredTollywood.slice(0, 5));
+          } else {
+            // Fallback: take all Tollywood Wall images in DB first
+            const allTollywood = res.data.data.filter(item => item.category === 'Tollywood Wall');
+            if (allTollywood.length >= 5) {
+              setGalleryItems(allTollywood.slice(0, 5));
+            } else {
+              setGalleryItems(fallbackItems);
+            }
+          }
+        } else {
+          setGalleryItems(fallbackItems);
+        }
+      } catch (err) {
+        console.warn('Fallback loading Tollywood items:', err.message);
+        setGalleryItems(fallbackItems);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTollywoodStarred();
+  }, []);
+
+  useEffect(() => {
+    if (loading || galleryItems.length === 0) return;
+
+    const trigger = triggerRef.current;
+    const filmstrip = filmstripRef.current;
+
+    const scrollWidth = filmstrip.scrollWidth - window.innerWidth;
+
+    const pin = gsap.fromTo(filmstrip,
+      { x: 0 },
+      {
+        x: -scrollWidth,
+        ease: "none",
+        scrollTrigger: {
+          trigger: trigger,
+          pin: true,
+          scrub: 1,
+          start: "top top",
+          end: `+=${scrollWidth}`,
+          invalidateOnRefresh: true
+        }
+      }
+    );
+
+    return () => {
+      pin.scrollTrigger?.kill();
+    };
+  }, [loading, galleryItems]);
+
+  if (loading) {
+    return (
+      <div className="w-full bg-[#FAF6EE] py-28 flex flex-col items-center justify-center space-y-4">
+        <div className="w-10 h-10 border-4 border-brand-gold border-t-transparent rounded-full animate-spin" />
+        <span className="text-sm font-semibold uppercase tracking-widest text-brand-gold">Loading Cinematic Wall...</span>
+      </div>
+    );
+  }
 
   return (
     <div ref={triggerRef} className="relative w-full bg-[#FAF6EE] overflow-hidden film-grain py-20 border-b border-brand-brown/5">
@@ -104,7 +153,7 @@ const HomeTollywood = () => {
           {/* Film Strip Frames */}
           {galleryItems.map((item, idx) => (
             <div 
-              key={item.title} 
+              key={item._id || item.title} 
               className="inline-block mx-6 md:mx-10 shrink-0 select-none whitespace-normal bg-zinc-900 border-x-4 border-zinc-950 p-5 w-[280px] md:w-[380px] flex flex-col space-y-4 hover:border-brand-gold/45 transition-colors duration-300 rounded"
             >
               {/* Photo Frame */}
@@ -118,12 +167,12 @@ const HomeTollywood = () => {
               </div>
 
               {/* Caption */}
-              <div className="flex flex-col space-y-1">
-                <span className="font-playfair text-base md:text-lg font-bold text-brand-gold tracking-wide">
+              <div className="flex flex-col space-y-1 text-brand-lightBg">
+                <span className="font-playfair text-base md:text-lg font-bold text-brand-gold tracking-wide truncate block">
                   {idx + 1}. {item.title}
                 </span>
-                <span className="text-xs text-zinc-400 italic">
-                  {item.desc}
+                <span className="text-xs text-zinc-400 italic block truncate">
+                  {item.description || item.desc || "Vintage cinema archival print."}
                 </span>
               </div>
             </div>

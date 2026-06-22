@@ -253,7 +253,7 @@ const HomeReservation = () => {
                   <motion.button
                     type="submit"
                     disabled={loading}
-                    className="px-12 py-4.5 bg-brand-red text-brand-lightBg uppercase tracking-widest text-xs font-bold rounded flex items-center justify-center gap-2 border border-brand-red/20 gold-glow-hover disabled:opacity-50"
+                    className="px-18 py-5.5 bg-brand-red text-brand-lightBg uppercase tracking-widest text-sm font-black rounded-lg flex items-center justify-center gap-2 border-2 border-brand-red/20 gold-glow-hover disabled:opacity-50"
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.98 }}
                   >

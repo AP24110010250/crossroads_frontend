@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ImageProvider } from './context/ImageContext';
 
 // Pages
 import Home from './pages/Home';
@@ -13,22 +14,24 @@ import Admin from './pages/Admin';
 const App = () => {
   return (
     <AuthProvider>
-      <Router basename={import.meta.env.BASE_URL}>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Home />} />
-          <Route path="/menu" element={<Menu />} />
-          <Route path="/gallery" element={<Gallery />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          
-          {/* Admin Dashboard */}
-          <Route path="/admin" element={<Admin />} />
+      <ImageProvider>
+        <Router basename={import.meta.env.BASE_URL}>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Home />} />
+            <Route path="/menu" element={<Menu />} />
+            <Route path="/gallery" element={<Gallery />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            
+            {/* Admin Dashboard */}
+            <Route path="/admin" element={<Admin />} />
 
-          {/* Catch-all redirect to Home */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Router>
+            {/* Catch-all redirect to Home */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Router>
+      </ImageProvider>
     </AuthProvider>
   );
 };

@@ -103,16 +103,16 @@ const Gallery = () => {
           </div>
         </section>
 
-        {/* Categories filters */}
-        <section className="py-8 px-6 md:px-12 bg-brand-lightBg border-b border-brand-brown/10 sticky top-[76px] z-30 backdrop-blur-md bg-opacity-95">
-          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-center gap-3 pb-2 md:pb-0">
+        {/* Categories filters - Thin, Non-Sticky */}
+        <section className="py-5 px-6 md:px-12 bg-brand-lightBg border-b border-brand-brown/10 relative z-20 shadow-xs">
+          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-center gap-2.5 pb-2 md:pb-0">
             {categories.map((cat) => (
               <button
                 key={cat}
                 onClick={() => { setActiveCategory(cat); setLightboxIndex(null); }}
-                className={`px-7 py-3.5 rounded-full text-sm uppercase font-extrabold tracking-wider transition-all duration-300 shrink-0 border-2 ${
+                className={`px-5 py-2.5 rounded-full text-xs uppercase font-extrabold tracking-wider transition-all duration-300 shrink-0 border-2 ${
                   activeCategory === cat 
-                    ? 'bg-brand-gold border-brand-gold text-brand-lightBg shadow-md scale-105' 
+                    ? 'bg-brand-gold border-brand-gold text-brand-lightBg shadow-sm' 
                     : 'bg-white border-brand-brown/10 hover:border-brand-gold text-brand-brown/85'
                 }`}
               >

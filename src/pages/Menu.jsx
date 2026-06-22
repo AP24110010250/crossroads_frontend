@@ -24,7 +24,10 @@ const Menu = () => {
 
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-  const categories = [
+  const [categories, setCategories] = useState(['All']);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const defaultCategories = [
     'All',
     'Breakfast',
     'Starters',
@@ -52,6 +55,20 @@ const Menu = () => {
     { name: 'Kakinada Kaja', price: 200, category: 'Sweets', isVeg: true, isChefSpecial: true, description: 'Authentic layered sweet pastry soaked in cardamom syrup.', image: '/placeholders/sweets-counter.webp', available: true }
   ];
 
+  const fetchCategories = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/categories`);
+      if (res.data.success && res.data.data.length > 0) {
+        setCategories(['All', ...res.data.data.map(c => c.name)]);
+      } else {
+        setCategories(defaultCategories);
+      }
+    } catch (err) {
+      console.warn('Failed to load dynamic categories, using fallback list.');
+      setCategories(defaultCategories);
+    }
+  };
+
   const fetchMenu = async () => {
     try {
       setLoading(true);
@@ -72,6 +89,7 @@ const Menu = () => {
 
   useEffect(() => {
     fetchMenu();
+    fetchCategories();
   }, []);
 
   // Responsive Radius Configuration
@@ -180,25 +198,63 @@ const Menu = () => {
           </div>
         </section>
 
-        {/* Filter Controls & Search - Clean, Sized-Up */}
-        <section className="py-8 px-6 md:px-12 bg-brand-lightBg sticky top-[76px] z-30 border-b border-brand-brown/10 backdrop-blur-md bg-opacity-95 shadow-xs">
+        {/* Filter Controls & Search - Thin, Non-Sticky */}
+        <section className="py-5 px-6 md:px-12 bg-brand-lightBg border-b border-brand-brown/10 relative z-20 shadow-xs">
           <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-6">
             
             {/* Category Filter Bar */}
-            <div className="w-full lg:w-auto flex flex-wrap items-center justify-center lg:justify-start gap-3 pb-2 lg:pb-0">
-              {categories.map((cat) => (
+            <div className="w-full lg:w-auto flex flex-wrap items-center justify-center lg:justify-start gap-2.5 pb-2 lg:pb-0">
+              {categories.slice(0, 5).map((cat) => (
                 <button
                   key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  className={`px-7 py-3.5 rounded-full text-sm uppercase font-extrabold tracking-wider transition-all duration-300 shrink-0 border-2 ${
+                  onClick={() => {
+                    setActiveCategory(cat);
+                    setDropdownOpen(false);
+                  }}
+                  className={`px-5 py-2.5 rounded-full text-xs uppercase font-extrabold tracking-wider transition-all duration-300 shrink-0 border-2 ${
                     activeCategory === cat 
-                      ? 'bg-brand-red text-brand-lightBg border-brand-red shadow-md scale-105' 
+                      ? 'bg-brand-red text-brand-lightBg border-brand-red shadow-sm' 
                       : 'bg-white border-brand-brown/10 hover:border-brand-gold text-brand-brown/85'
                   }`}
                 >
                   {cat}
                 </button>
               ))}
+
+              {categories.length > 5 && (
+                <div className="relative">
+                  <button
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                    className={`px-5 py-2.5 rounded-full text-xs uppercase font-extrabold tracking-wider transition-all duration-300 flex items-center gap-1.5 border-2 ${
+                      categories.slice(5).includes(activeCategory)
+                        ? 'bg-brand-red text-brand-lightBg border-brand-red shadow-sm' 
+                        : 'bg-white border-brand-brown/10 hover:border-brand-gold text-brand-brown/85'
+                    }`}
+                  >
+                    <span>{categories.slice(5).includes(activeCategory) ? activeCategory : 'More'}</span>
+                    <span className="text-[10px]">▼</span>
+                  </button>
+
+                  {dropdownOpen && (
+                    <div className="absolute top-full left-0 mt-2 bg-white border border-brand-brown/15 rounded-lg shadow-xl py-1.5 min-w-[160px] z-50 max-h-60 overflow-y-auto">
+                      {categories.slice(5).map((cat) => (
+                        <button
+                          key={cat}
+                          onClick={() => {
+                            setActiveCategory(cat);
+                            setDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-5 py-2 text-xs font-bold uppercase tracking-wider hover:bg-brand-beige transition-colors block ${
+                            activeCategory === cat ? 'text-brand-red bg-brand-beige/50 font-black' : 'text-brand-brown/85'
+                          }`}
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Search and Veg Toggles */}
@@ -210,21 +266,21 @@ const Menu = () => {
                   placeholder="Search recipe..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-white border-2 border-brand-brown/10 hover:border-brand-brown/25 focus:border-brand-red rounded-full px-6 py-4 pl-12 text-sm focus:outline-none text-brand-brown transition-colors shadow-xs"
+                  className="w-full bg-white border-2 border-brand-brown/10 hover:border-brand-brown/25 focus:border-brand-red rounded-full px-5 py-3 pl-11 text-xs focus:outline-none text-brand-brown transition-colors shadow-xs"
                 />
-                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-brown/45" />
+                <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-brown/45" />
               </div>
 
               {/* Veg Only Toggle */}
               <button
                 onClick={() => setVegOnly(!vegOnly)}
-                className={`flex items-center gap-2.5 px-7 py-4 rounded-full border-2 text-sm font-extrabold tracking-wider transition-all duration-300 w-full sm:w-auto justify-center bg-white ${
+                className={`flex items-center gap-2 px-5 py-3 rounded-full border-2 text-xs font-extrabold tracking-wider transition-all duration-300 w-full sm:w-auto justify-center bg-white ${
                   vegOnly 
                     ? 'bg-green-50 border-green-500/50 text-green-700 shadow-sm' 
                     : 'border-brand-brown/10 hover:border-brand-brown/25 text-brand-brown/80'
                 }`}
               >
-                <span className={`w-3.5 h-3.5 rounded-full ${vegOnly ? 'bg-green-500' : 'bg-brand-brown/20'}`} />
+                <span className={`w-3 h-3 rounded-full ${vegOnly ? 'bg-green-500' : 'bg-brand-brown/20'}`} />
                 <span>Veg Only</span>
               </button>
             </div>

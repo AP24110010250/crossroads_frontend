@@ -168,7 +168,7 @@ const HomeHero = () => {
             {/* Dish 2: Andhra Thali */}
             <div ref={dish2Ref} className="flex flex-col items-center text-center max-w-[340px] group gpu-accelerated">
               <div className="w-44 h-44 md:w-60 md:h-60 rounded-full overflow-hidden border-2 border-brand-gold/30 gold-glow relative bg-brand-beige">
-                <img src={getImageUrl('/placeholders/andhra-thali.webp')} alt="Andhra Thali" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <img src={getImageUrl('/placeholders/andhra-thali-premium.png')} alt="Andhra Thali" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
               </div>
               <h4 className="font-playfair text-2xl md:text-3xl font-extrabold text-brand-brown mt-4">Andhra Thali</h4>
               <span className="text-sm text-brand-red uppercase tracking-wider font-extrabold mt-1">24 Items Unlimited Feast</span>

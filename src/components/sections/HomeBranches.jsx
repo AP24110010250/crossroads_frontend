@@ -7,38 +7,38 @@ const HomeBranches = () => {
   const branches = [
     {
       name: 'Governorpet',
-      address: '27/6/141 Prakasam Road, Governor Peta, Vijayawada 520002. Near LIC Building.',
-      phone: '73373 74444 / +91 866 257 2424',
+      address: '27/6/141 Prakasam Road, Governorpet, Vijayawada 520002',
+      phone: '73373 74444 / 0866 257 2424',
       timings: '11:00 AM - 11:00 PM',
       mapLink: 'https://www.google.com/maps?q=27/6/141+Prakasam+Road+Governor+Peta+Vijayawada+520002',
-      desc: 'Our flagship legacy branch in the commercial heart of Governorpet. A favorite family spot for 25 years.',
+      desc: 'Our flagship legacy branch near LIC Building. A favorite family spot for 25 years.',
       image: '/placeholders/hero-interior.webp'
     },
     {
       name: 'Moghalrajapuram',
-      address: '32-9-18/2, Siddhartha College Rd, Near Madhu Kalyana Mantapam, Vijayawada 520010. Beside Jemmi Chettu.',
+      address: '32-9-18/2, Siddhartha College Rd, Moghalrajapuram, Vijayawada 520010',
       phone: '73373 72222 / 95816 05555',
       timings: '11:00 AM - 11:00 PM',
       mapLink: 'https://www.google.com/maps?q=32-9-18/2+Siddhartha+College+Road+Moghalrajapuram+Vijayawada+520010',
-      desc: 'Sophisticated dining environment with ambient lighting, retro Tollywood framing, and spacious seating.',
+      desc: 'Sophisticated family dining space featuring retro Tollywood framing beside Jemmi Chettu.',
       image: '/placeholders/family-dining.webp'
     },
     {
       name: 'Gollapudi',
-      address: 'Door No 6-44/1, Near One Centre, Hyderabad Highway Road, Gollapudi, Vijayawada 521225. Opposite granites showroom.',
+      address: 'Door No 6-44/1, Hyderabad Highway, Gollapudi 521225',
       phone: '73373 71111 / 77992 01111',
       timings: '11:00 AM - 11:00 PM',
       mapLink: 'https://www.google.com/maps?q=Door+No+6-44/1+Gollapudi+Vijayawada',
-      desc: 'Spacious highway restaurant featuring modern layouts, ample car parking, and our legendary unlimited meals.',
+      desc: 'Spacious highway outlet with ample parking, famous for our legendary unlimited meals.',
       image: '/placeholders/hero-food.webp'
     },
     {
       name: 'Gannavaram',
-      address: 'Chennai – Kolkata Hwy, Gannavaram, Kesarapalli, Andhra Pradesh 521102. 5 minutes from Airport.',
+      address: 'Chennai–Kolkata Highway, Gannavaram, Kesarapalli 521102',
       phone: '77770 21234',
       timings: '11:00 AM - 11:00 PM',
       mapLink: 'https://maps.app.goo.gl/jmLDuCbQ5NPEN',
-      desc: 'Premium airport corridor branch. Renowned for our legendary breakfast menu items (MLA Dosa, Babai Idli).',
+      desc: 'Premium airport corridor branch, renowned for authentic breakfast and sweet counters.',
       image: '/placeholders/sweets-counter.webp'
     }
   ];

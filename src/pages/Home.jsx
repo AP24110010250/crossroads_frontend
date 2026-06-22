@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import Navbar from '../components/sections/Navbar';
 import Footer from '../components/sections/Footer';
 import Preloader from '../components/ui/Preloader';
@@ -8,15 +8,27 @@ import SmoothScroll from '../components/animations/SmoothScroll';
 import HomeHero from '../components/sections/HomeHero';
 import HomeTimeline from '../components/sections/HomeTimeline';
 import HomeThali from '../components/sections/HomeThali';
-import HomeBiryani from '../components/sections/HomeBiryani';
 import HomeSignature from '../components/sections/HomeSignature';
 import HomeTollywood from '../components/sections/HomeTollywood';
 import HomeSweets from '../components/sections/HomeSweets';
 import HomeBranches from '../components/sections/HomeBranches';
+import HomeBanquet from '../components/sections/HomeBanquet';
 import HomeTestimonials from '../components/sections/HomeTestimonials';
 import HomeReservation from '../components/sections/HomeReservation';
 
 const Home = () => {
+  // Hash scroll observer
+  useEffect(() => {
+    if (window.location.hash) {
+      const element = document.querySelector(window.location.hash);
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }, 150);
+      }
+    }
+  }, []);
+
   return (
     <SmoothScroll>
       <div className="relative min-h-screen bg-brand-lightBg text-brand-brown flex flex-col pt-[72px]">
@@ -35,20 +47,20 @@ const Home = () => {
           {/* Section 4: The Thali Experience (400vh) */}
           <HomeThali />
 
-          {/* Section 5: The Biryani Story (500vh) */}
-          <HomeBiryani />
-
-          {/* Section 6: Signature Dishes Grid */}
+          {/* Section 5: Signature Dishes Grid */}
           <HomeSignature />
 
-          {/* Section 7: Vintage Tollywood Gallery (300vh) */}
+          {/* Section 6: Vintage Tollywood Gallery (300vh) */}
           <HomeTollywood />
 
-          {/* Section 8: Sweets Experience */}
+          {/* Section 7: Sweets Experience */}
           <HomeSweets />
 
-          {/* Section 9: Branch Network */}
+          {/* Section 8: Branch Network */}
           <HomeBranches />
+
+          {/* Section 9: Banquet Hall Experience */}
+          <HomeBanquet />
 
           {/* Section 10: Testimonials Carousel */}
           <HomeTestimonials />

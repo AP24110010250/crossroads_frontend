@@ -21,6 +21,12 @@ const Footer = () => {
       map: 'https://www.google.com/maps?q=32-9-18/2+Siddhartha+College+Road+Moghalrajapuram+Vijayawada+520010'
     },
     {
+      name: 'Moghalrajapuram Banquet Hall',
+      address: 'Siddhartha College Rd, Near Madhu Chowk, Vijayawada',
+      phone: '84708 04805',
+      map: 'https://www.google.com/maps?q=32-9-18/2+Siddhartha+College+Road+Moghalrajapuram+Vijayawada+520010'
+    },
+    {
       name: 'Gollapudi',
       address: 'Near One Centre, Hyderabad Highway, Gollapudi',
       phone: '73373 71111',
@@ -128,8 +134,21 @@ const Footer = () => {
       <hr className="border-brand-brown/10 mb-8" />
 
       {/* Copyright row */}
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between text-sm text-brand-brown/80 font-bold">
-        <span>&copy; {new Date().getFullYear()} Cross Roads Restaurant & Sweets. All Rights Reserved.</span>
+      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between text-sm text-brand-brown/80 font-bold gap-4">
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-2">
+          <span>&copy; {new Date().getFullYear()} Cross Roads Restaurant & Sweets. All Rights Reserved.</span>
+          <span className="hidden md:inline text-brand-brown/30">|</span>
+          <span className="flex items-center gap-1.5 flex-wrap">
+            developed by Rupa Sri.Jerri
+            <a 
+              href="tel:+918247034649" 
+              className="inline-flex items-center gap-1 px-3 py-1 bg-white hover:bg-brand-red hover:text-brand-lightBg text-brand-red border border-brand-brown/15 rounded text-xs transition-all font-bold shadow-xs ml-1"
+            >
+              <Phone size={11} />
+              <span>+91 824 703 4649</span>
+            </a>
+          </span>
+        </div>
         <div className="flex items-center mt-4 md:mt-0">
           <button 
             onClick={scrollToTop} 

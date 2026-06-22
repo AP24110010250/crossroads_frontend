@@ -7,7 +7,8 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { 
   Lock, Calendar, Utensils, Star, Image as ImageIcon, MapPin, 
-  Check, X, Trash2, Plus, Edit, RefreshCw, AlertCircle, Sparkles, CheckCircle2 
+  Check, X, Trash2, Plus, Edit, RefreshCw, AlertCircle, Sparkles, CheckCircle2,
+  Tag, FileImage
 } from 'lucide-react';
 
 const Admin = () => {
@@ -28,6 +29,8 @@ const Admin = () => {
   const [testimonials, setTestimonials] = useState([]);
   const [galleryItems, setGalleryItems] = useState([]);
   const [branches, setBranches] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [pageImages, setPageImages] = useState([]);
 
   // Loading / Error states
   const [loading, setLoading] = useState(false);
@@ -43,6 +46,7 @@ const Admin = () => {
     category: 'Breakfast',
     isVeg: false,
     isChefSpecial: false,
+    isStarred: false,
     imageFile: null
   });
   const [editingMenuId, setEditingMenuId] = useState(null);
@@ -51,8 +55,16 @@ const Admin = () => {
   const [galleryForm, setGalleryForm] = useState({
     title: '',
     category: 'Food',
+    isStarred: false,
     imageFile: null
   });
+
+  // Category Form State
+  const [categoryInput, setCategoryInput] = useState('');
+
+  // Page Image upload form state
+  const [selectedPageImageKey, setSelectedPageImageKey] = useState('');
+  const [pageImageFile, setPageImageFile] = useState(null);
 
   // Branch Editing Form State
   const [selectedBranch, setSelectedBranch] = useState(null);
@@ -82,12 +94,28 @@ const Admin = () => {
       } else if (activeTab === 'menu') {
         const res = await axios.get(`${API_URL}/menu`);
         if (res.data.success) setMenuItems(res.data.data);
+        
+        // Also load categories for the select dropdown
+        const catRes = await axios.get(`${API_URL}/categories`);
+        if (catRes.data.success) {
+          setCategories(catRes.data.data);
+          // Set default category in menuForm if categories exist and form category is empty or default
+          if (catRes.data.data.length > 0 && !menuForm.category) {
+            setMenuForm(prev => ({ ...prev, category: catRes.data.data[0].name }));
+          }
+        }
+      } else if (activeTab === 'categories') {
+        const res = await axios.get(`${API_URL}/categories`);
+        if (res.data.success) setCategories(res.data.data);
       } else if (activeTab === 'testimonials') {
         const res = await axios.get(`${API_URL}/testimonials?all=true`);
         if (res.data.success) setTestimonials(res.data.data);
       } else if (activeTab === 'gallery') {
         const res = await axios.get(`${API_URL}/gallery`);
         if (res.data.success) setGalleryItems(res.data.data);
+      } else if (activeTab === 'pageImages') {
+        const res = await axios.get(`${API_URL}/page-images`);
+        if (res.data.success) setPageImages(res.data.data);
       } else if (activeTab === 'branches') {
         const res = await axios.get(`${API_URL}/branches`);
         if (res.data.success) setBranches(res.data.data);
@@ -189,6 +217,14 @@ const Admin = () => {
     e.preventDefault();
     setActionLoading(true);
     
+    // Validate Signature Curations Starred constraints
+    const starredCount = menuItems.filter(item => item.isStarred && item._id !== editingMenuId).length;
+    if (menuForm.isStarred && starredCount >= 6) {
+      alert('You can star a maximum of 6 items for the home page Signature Curations section.');
+      setActionLoading(false);
+      return;
+    }
+
     const formDataToSend = new FormData();
     formDataToSend.append('name', menuForm.name);
     formDataToSend.append('description', menuForm.description);
@@ -197,6 +233,7 @@ const Admin = () => {
     formDataToSend.append('category', menuForm.category);
     formDataToSend.append('isVeg', menuForm.isVeg);
     formDataToSend.append('isChefSpecial', menuForm.isChefSpecial);
+    formDataToSend.append('isStarred', menuForm.isStarred);
     
     if (menuForm.imageFile) {
       formDataToSend.append('image', menuForm.imageFile);
@@ -247,6 +284,7 @@ const Admin = () => {
       category: item.category,
       isVeg: item.isVeg,
       isChefSpecial: item.isChefSpecial,
+      isStarred: item.isStarred || false,
       imageFile: null
     });
   };
@@ -273,9 +311,10 @@ const Admin = () => {
       description: '',
       price: '',
       priceHalf: '',
-      category: 'Breakfast',
+      category: categories.length > 0 ? categories[0].name : 'Breakfast',
       isVeg: false,
       isChefSpecial: false,
+      isStarred: false,
       imageFile: null
     });
   };
@@ -288,9 +327,21 @@ const Admin = () => {
       return;
     }
     setActionLoading(true);
+    
+    // Starred count check
+    if (galleryForm.isStarred && galleryForm.category === 'Tollywood Wall') {
+      const currentStarredCount = galleryItems.filter(g => g.isStarred && g.category === 'Tollywood Wall').length;
+      if (currentStarredCount >= 5) {
+        alert("Exactly 5 starred images are displayed on the Tollywood wall. Unstar another image first, or upload this as non-starred.");
+        setActionLoading(false);
+        return;
+      }
+    }
+
     const fd = new FormData();
     fd.append('title', galleryForm.title);
     fd.append('category', galleryForm.category);
+    fd.append('isStarred', galleryForm.isStarred);
     fd.append('image', galleryForm.imageFile);
 
     try {
@@ -299,11 +350,68 @@ const Admin = () => {
       });
       if (res.data.success) {
         alert('Gallery image uploaded!');
-        setGalleryForm({ title: '', category: 'Food', imageFile: null });
+        setGalleryForm({ title: '', category: 'Food', isStarred: false, imageFile: null });
         fetchTabResources();
       }
     } catch (err) {
       alert(err.response?.data?.message || 'Failed uploading image.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleToggleGalleryStar = async (item) => {
+    setActionLoading(true);
+    try {
+      const updatedStarred = !item.isStarred;
+      
+      // Enforce the requirement: exactly 5 images are displayed on Tollywood Wall
+      if (item.category === 'Tollywood Wall') {
+        const currentStarredCount = galleryItems.filter(g => g.isStarred && g.category === 'Tollywood Wall' && g._id !== item._id).length;
+        if (updatedStarred && currentStarredCount >= 5) {
+          alert("Exactly 5 starred images are displayed on the Tollywood wall. Unstar another image before starring this one.");
+          setActionLoading(false);
+          return;
+        }
+      }
+
+      const res = await axios.put(`${API_URL}/gallery/${item._id}`, { isStarred: updatedStarred });
+      if (res.data.success) {
+        setGalleryItems(prev => prev.map(g => g._id === item._id ? { ...g, isStarred: updatedStarred } : g));
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update image star status.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleToggleMenuStar = async (item) => {
+    setActionLoading(true);
+    try {
+      const updatedStarred = !item.isStarred;
+      if (updatedStarred) {
+        const starredCount = menuItems.filter(m => m.isStarred).length;
+        if (starredCount >= 6) {
+          alert('You can star a maximum of 6 items for the home page Signature Curations section.');
+          setActionLoading(false);
+          return;
+        }
+      } else {
+        const starredCount = menuItems.filter(m => m.isStarred).length;
+        if (starredCount <= 3) {
+          alert('You must have at least 3 starred menu items for Our Signature Curations. Please star another item before unstarring this one.');
+          setActionLoading(false);
+          return;
+        }
+      }
+
+      const res = await axios.put(`${API_URL}/menu/${item._id}`, { isStarred: updatedStarred });
+      if (res.data.success) {
+        setMenuItems(prev => prev.map(m => m._id === item._id ? { ...m, isStarred: updatedStarred } : m));
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update menu star status.');
     } finally {
       setActionLoading(false);
     }
@@ -319,6 +427,92 @@ const Admin = () => {
       }
     } catch (err) {
       alert(err.response?.data?.message || 'Failed deleting image.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Category CRUD actions
+  const handleCategoryCreate = async (e) => {
+    e.preventDefault();
+    if (!categoryInput.trim()) return;
+    setActionLoading(true);
+    try {
+      const res = await axios.post(`${API_URL}/categories`, { name: categoryInput.trim() });
+      if (res.data.success) {
+        alert('Category added successfully!');
+        setCategoryInput('');
+        fetchTabResources();
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to add category.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleCategoryDelete = async (id) => {
+    if (!window.confirm('Delete this category permanently?')) return;
+    setActionLoading(true);
+    try {
+      const res = await axios.delete(`${API_URL}/categories/${id}`);
+      if (res.data.success) {
+        alert('Category deleted successfully!');
+        fetchTabResources();
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to delete category.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Page Image upload actions
+  const handlePageImageSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedPageImageKey || !pageImageFile) {
+      alert('Please select a setting key and upload an image file!');
+      return;
+    }
+    setActionLoading(true);
+    const fd = new FormData();
+    fd.append('image', pageImageFile);
+
+    const existing = pageImages.find(img => img.key === selectedPageImageKey);
+    const labelMapping = {
+      'home_hero_bg': { label: 'Home Hero Background', page: 'home' },
+      'home_hero_biryani': { label: 'Home Hero Biryani Item', page: 'home' },
+      'home_hero_thali': { label: 'Home Hero Thali Item', page: 'home' },
+      'home_hero_idly': { label: 'Home Hero Idly Item', page: 'home' },
+      'home_thali': { label: 'Home Thali Experience Section', page: 'home' },
+      'home_sweets': { label: 'Home Sweets Experience Section', page: 'home' },
+      'home_banquet': { label: 'Home Banquet Section Image', page: 'home' },
+      'about_header_bg': { label: 'About Header Background', page: 'about' },
+      'about_founding': { label: 'About Founding Legacy Section', page: 'about' },
+      'about_philosophy': { label: 'About Culinary Philosophy Section', page: 'about' },
+      'about_banquet': { label: 'About Banquet Hall Section Details', page: 'about' }
+    };
+    const details = existing || labelMapping[selectedPageImageKey];
+    if (details) {
+      fd.append('label', details.label);
+      fd.append('page', details.page);
+    } else {
+      fd.append('label', selectedPageImageKey.replace(/_/g, ' '));
+      fd.append('page', selectedPageImageKey.startsWith('about_') ? 'about' : 'home');
+    }
+
+    try {
+      const res = await axios.put(`${API_URL}/page-images/${selectedPageImageKey}`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      if (res.data.success) {
+        alert('Image updated successfully!');
+        setPageImageFile(null);
+        setSelectedPageImageKey('');
+        fetchTabResources();
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update page image.');
     } finally {
       setActionLoading(false);
     }
@@ -430,8 +624,10 @@ const Admin = () => {
                   {[
                     { id: 'reservations', label: 'Reservations', icon: <Calendar size={18} /> },
                     { id: 'menu', label: 'Menu CRUD', icon: <Utensils size={18} /> },
+                    { id: 'categories', label: 'Category CRUD', icon: <Tag size={18} /> },
                     { id: 'testimonials', label: 'Testimonials', icon: <Star size={18} /> },
                     { id: 'gallery', label: 'Gallery', icon: <ImageIcon size={18} /> },
+                    { id: 'pageImages', label: 'Page Images', icon: <FileImage size={18} /> },
                     { id: 'branches', label: 'Branches', icon: <MapPin size={18} /> }
                   ].map((tab) => (
                     <button
@@ -567,9 +763,18 @@ const Admin = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 text-brand-brown">
                       {/* Left: Form */}
                       <div className="lg:col-span-4 bg-brand-beige border border-brand-brown/10 p-6 rounded-lg glass-card h-fit">
-                        <h2 className="font-playfair text-xl font-bold text-brand-brown mb-4 border-b border-brand-brown/10 pb-2">
+                        <h2 className="font-playfair text-xl font-bold text-brand-brown mb-2 border-b border-brand-brown/10 pb-2">
                           {editingMenuId ? 'Edit Culinary Dish' : 'Add New Culinary Dish'}
                         </h2>
+
+                        {/* Starred constraint reminder */}
+                        <div className={`p-3 rounded mb-4 text-xs font-semibold border leading-relaxed ${
+                          menuItems.filter(item => item.isStarred).length < 3 
+                            ? 'bg-yellow-50 text-yellow-800 border-yellow-250' 
+                            : 'bg-green-50 text-green-700 border-green-200'
+                        }`}>
+                          <span>Signature Curations count: <b>{menuItems.filter(item => item.isStarred).length}</b> starred (Min 3, Max 6 required).</span>
+                        </div>
                         
                         <form onSubmit={handleMenuSubmit} className="flex flex-col space-y-4 text-sm">
                           <div className="flex flex-col space-y-1">
@@ -631,8 +836,8 @@ const Admin = () => {
                               onChange={handleMenuInputChange}
                               className="w-full bg-white border border-brand-brown/20 rounded px-4 py-2.5 text-sm text-brand-brown focus:outline-none focus:border-brand-gold transition-colors shadow-sm"
                             >
-                              {['Breakfast', 'Starters', 'Soups', 'Biryani', 'Veg Curries', 'Non-Veg Curries', 'Breads', 'Chinese', 'Sweets'].map(cat => (
-                                <option key={cat} value={cat}>{cat}</option>
+                              {categories.map(cat => (
+                                <option key={cat._id || cat.name} value={cat.name}>{cat.name}</option>
                               ))}
                             </select>
                           </div>
@@ -651,7 +856,7 @@ const Admin = () => {
                           </div>
 
                           {/* Checkbox fields */}
-                          <div className="flex items-center space-x-6 pt-2">
+                          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-2">
                             <label className="flex items-center space-x-2 text-sm cursor-pointer select-none text-brand-brown">
                               <input
                                 type="checkbox"
@@ -671,6 +876,16 @@ const Admin = () => {
                                 className="w-5 h-5 accent-brand-gold rounded border-brand-brown/20"
                               />
                               <span className="flex items-center gap-1 text-brand-gold font-bold"><Sparkles size={14} /> Chef Special</span>
+                            </label>
+                            <label className="flex items-center space-x-2 text-sm cursor-pointer select-none text-brand-brown">
+                              <input
+                                type="checkbox"
+                                name="isStarred"
+                                checked={menuForm.isStarred}
+                                onChange={handleMenuInputChange}
+                                className="w-5 h-5 accent-brand-gold rounded border-brand-brown/20"
+                              />
+                              <span className="flex items-center gap-1 text-brand-red font-bold"><Star size={14} className="fill-brand-red" /> Starred (Home)</span>
                             </label>
                           </div>
 
@@ -715,7 +930,8 @@ const Admin = () => {
                               <div className="flex flex-col space-y-1 flex-grow pr-16 text-sm text-brand-brown">
                                 <div className="flex items-center gap-1.5 flex-wrap">
                                   <span className="font-bold text-brand-brown text-base leading-snug">{item.name}</span>
-                                  {item.isChefSpecial && <Sparkles size={12} className="text-brand-gold shrink-0" />}
+                                  {item.isStarred && <Star size={12} className="text-brand-red fill-brand-red shrink-0" title="Starred (Home Signature)" />}
+                                  {item.isChefSpecial && <Sparkles size={12} className="text-brand-gold shrink-0" title="Chef Special" />}
                                   <span className={`w-2.5 h-2.5 rounded-full shrink-0 border border-white ${item.isVeg ? 'bg-green-600' : 'bg-red-600'}`} title={item.isVeg ? 'Veg' : 'Non-Veg'} />
                                 </div>
                                 <span className="text-brand-red font-bold text-base">₹{item.price} {item.priceHalf && <span className="text-xs text-brand-brown/50 font-normal">(Half: ₹{item.priceHalf})</span>}</span>
@@ -724,6 +940,17 @@ const Admin = () => {
 
                               {/* Operations */}
                               <div className="absolute top-4 right-4 flex items-center space-x-1.5">
+                                <button 
+                                  onClick={() => handleToggleMenuStar(item)}
+                                  className={`p-2 rounded border transition-colors ${
+                                    item.isStarred 
+                                      ? 'bg-brand-gold border-brand-gold text-brand-lightBg hover:bg-brand-gold/80' 
+                                      : 'bg-brand-beige border-brand-brown/10 hover:border-brand-gold text-brand-brown'
+                                  }`}
+                                  title={item.isStarred ? "Unstar (Home Signature)" : "Star for Home Signature"}
+                                >
+                                  <Star size={14} className={item.isStarred ? "fill-current" : ""} />
+                                </button>
                                 <button 
                                   onClick={() => handleEditMenuSelect(item)}
                                   className="p-2 rounded bg-brand-beige border border-brand-brown/10 hover:border-brand-gold text-brand-brown transition-colors"
@@ -858,25 +1085,247 @@ const Admin = () => {
                           <h2 className="font-playfair text-2xl font-bold text-brand-brown">Current Gallery Media</h2>
                           <span className="font-telugu text-brand-muted text-lg tracking-wide ml-2">గ్యాలరీ చిత్రాలు</span>
                         </div>
+
+                        {/* Starred count check banner */}
+                        {(() => {
+                          const starredTollywoodCount = galleryItems.filter(g => g.isStarred && g.category === 'Tollywood Wall').length;
+                          return (
+                            <div className={`p-3.5 rounded-lg border text-sm font-semibold flex items-center gap-2.5 transition-all shadow-sm ${
+                              starredTollywoodCount === 5 
+                                ? 'bg-green-50 text-green-700 border-green-200' 
+                                : 'bg-yellow-50 text-yellow-800 border-yellow-250 animate-pulse'
+                            }`}>
+                              <AlertCircle size={18} className="shrink-0 text-brand-gold" />
+                              <span>
+                                Tollywood Wall Starred Count: <b>{starredTollywoodCount}</b> of <b>5</b> starred.
+                                {starredTollywoodCount !== 5 && ' (Exactly 5 starred images are required for the Tollywood Wall to display on the homepage!)'}
+                              </span>
+                            </div>
+                          );
+                        })()}
+
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                           {galleryItems.map(g => (
                             <div key={g._id} className="relative aspect-video rounded overflow-hidden group border border-brand-brown/10 bg-white shadow-sm hover:shadow-md transition-shadow">
                               <img src={getImageUrl(g.image)} alt={g.title} className="w-full h-full object-cover" />
+                              
+                              {/* Star indicator badge (visible without hover) */}
+                              {g.isStarred && (
+                                <div className="absolute top-2 left-2 z-20 bg-brand-gold text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow">
+                                  <Star size={10} className="fill-current" />
+                                  <span>Starred</span>
+                                </div>
+                              )}
+
                               <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-3.5 z-10 text-brand-lightBg">
                                 <span className="text-xs uppercase tracking-wider text-brand-gold font-bold">{g.category}</span>
                                 <div className="flex items-center justify-between gap-2">
-                                  <span className="text-xs text-brand-lightBg truncate max-w-[120px]" title={g.title}>{g.title}</span>
-                                  <button 
-                                    onClick={() => handleDeleteGalleryItem(g._id)}
-                                    disabled={actionLoading}
-                                    className="p-1.5 rounded bg-red-900 hover:bg-red-805 text-brand-lightBg transition-colors"
-                                  >
-                                    <Trash2 size={12} />
-                                  </button>
+                                  <span className="text-xs text-brand-lightBg truncate max-w-[100px]" title={g.title}>{g.title}</span>
+                                  <div className="flex items-center gap-1">
+                                    <button 
+                                      onClick={() => handleToggleGalleryStar(g)}
+                                      disabled={actionLoading}
+                                      className={`p-1.5 rounded transition-colors ${
+                                        g.isStarred 
+                                          ? 'bg-brand-gold text-brand-lightBg hover:bg-brand-gold/80' 
+                                          : 'bg-white/20 text-white hover:bg-white/40'
+                                      }`}
+                                      title={g.isStarred ? "Unstar Image" : "Star Image"}
+                                    >
+                                      <Star size={12} className={g.isStarred ? "fill-current" : ""} />
+                                    </button>
+                                    <button 
+                                      onClick={() => handleDeleteGalleryItem(g._id)}
+                                      disabled={actionLoading}
+                                      className="p-1.5 rounded bg-red-900 hover:bg-red-805 text-brand-lightBg transition-colors"
+                                      title="Delete Image"
+                                    >
+                                      <Trash2 size={12} />
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             </div>
                           ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* TAB 3 (Inserted): CATEGORIES CRUD */}
+                  {activeTab === 'categories' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 text-brand-brown">
+                      {/* Left: Add Category Form */}
+                      <div className="lg:col-span-4 bg-brand-beige border border-brand-brown/10 p-6 rounded-lg glass-card h-fit">
+                        <h2 className="font-playfair text-xl font-bold text-brand-brown mb-4 border-b border-brand-brown/10 pb-2">
+                          Add New Category
+                        </h2>
+                        <form onSubmit={handleCategoryCreate} className="flex flex-col space-y-4 text-sm">
+                          <div className="flex flex-col space-y-1">
+                            <label className="text-xs uppercase font-bold text-brand-gold">Category Name *</label>
+                            <input
+                              type="text"
+                              required
+                              value={categoryInput}
+                              onChange={(e) => setCategoryInput(e.target.value)}
+                              placeholder="e.g. Traditional Soups"
+                              className="w-full bg-white border border-brand-brown/20 rounded px-4 py-2.5 text-sm text-brand-brown focus:outline-none focus:border-brand-gold transition-colors shadow-sm"
+                            />
+                          </div>
+                          <button
+                            type="submit"
+                            disabled={actionLoading}
+                            className="w-full py-3 bg-brand-gold hover:bg-brand-gold/90 text-brand-lightBg font-bold rounded uppercase tracking-wider text-xs shadow-md transition-colors"
+                          >
+                            {actionLoading ? 'Creating...' : 'Create Category'}
+                          </button>
+                        </form>
+                      </div>
+
+                      {/* Right: Category List */}
+                      <div className="lg:col-span-8 flex flex-col space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <h2 className="font-playfair text-2xl font-bold text-brand-brown">Categories</h2>
+                            <span className="font-telugu text-brand-muted text-lg tracking-wide ml-2">వర్గాలు</span>
+                          </div>
+                          <span className="text-xs text-brand-brown/70 font-semibold uppercase bg-brand-beige px-3 py-1 rounded-full">{categories.length} categories</span>
+                        </div>
+
+                        <div className="overflow-x-auto border border-brand-brown/10 rounded-lg glass-card shadow-sm">
+                          <table className="w-full text-left border-collapse text-sm">
+                            <thead>
+                              <tr className="border-b border-brand-brown/10 bg-brand-beige text-brand-brown uppercase tracking-wider text-xs font-bold">
+                                <th className="p-4">Name</th>
+                                <th className="p-4">Created Date</th>
+                                <th className="p-4 text-center">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-brand-brown/10 text-brand-brown bg-white">
+                              {categories.length === 0 ? (
+                                <tr>
+                                  <td colSpan="3" className="p-8 text-center text-brand-muted">No categories created yet.</td>
+                                </tr>
+                              ) : (
+                                categories.map((cat) => (
+                                  <tr key={cat._id} className="hover:bg-brand-beige/40">
+                                    <td className="p-4 font-bold text-brand-brown">{cat.name}</td>
+                                    <td className="p-4">{new Date(cat.createdAt || Date.now()).toLocaleDateString()}</td>
+                                    <td className="p-4">
+                                      <div className="flex items-center justify-center">
+                                        <button
+                                          onClick={() => handleCategoryDelete(cat._id)}
+                                          disabled={actionLoading}
+                                          className="p-2 rounded bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 transition-colors"
+                                          title="Delete Category"
+                                        >
+                                          <Trash2 size={16} />
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* TAB 4 (Inserted): PAGE IMAGES CUSTOMIZER */}
+                  {activeTab === 'pageImages' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 text-brand-brown">
+                      {/* Left: Upload/Change Page Image Form */}
+                      <div className="lg:col-span-4 bg-brand-beige border border-brand-brown/10 p-6 rounded-lg glass-card h-fit">
+                        <h2 className="font-playfair text-xl font-bold text-brand-brown mb-4 border-b border-brand-brown/10 pb-2">
+                          Customize Website Images
+                        </h2>
+                        <form onSubmit={handlePageImageSubmit} className="flex flex-col space-y-4 text-sm">
+                          <div className="flex flex-col space-y-1">
+                            <label className="text-xs uppercase font-bold text-brand-gold">Select Setting / Image Key *</label>
+                            <select
+                              required
+                              value={selectedPageImageKey}
+                              onChange={(e) => setSelectedPageImageKey(e.target.value)}
+                              className="w-full bg-white border border-brand-brown/20 rounded px-4 py-2.5 text-sm text-brand-brown focus:outline-none focus:border-brand-gold transition-colors shadow-sm"
+                            >
+                              <option value="">-- Choose Key to Customize --</option>
+                              <optgroup label="Homepage Settings">
+                                <option value="home_hero_bg">Home Hero Background</option>
+                                <option value="home_hero_biryani">Home Hero Biryani Item</option>
+                                <option value="home_hero_thali">Home Hero Thali Item</option>
+                                <option value="home_hero_idly">Home Hero Idly Item</option>
+                                <option value="home_thali">Home Thali Experience Section</option>
+                                <option value="home_sweets">Home Sweets Experience Section</option>
+                                <option value="home_banquet">Home Banquet Section Image</option>
+                              </optgroup>
+                              <optgroup label="About Page Settings">
+                                <option value="about_header_bg">About Header Background</option>
+                                <option value="about_founding">About Founding Legacy Section</option>
+                                <option value="about_philosophy">About Culinary Philosophy Section</option>
+                                <option value="about_banquet">About Banquet Hall Section Details</option>
+                              </optgroup>
+                            </select>
+                          </div>
+
+                          <div className="flex flex-col space-y-1">
+                            <label className="text-xs uppercase font-bold text-brand-gold">Upload Custom Image *</label>
+                            <input
+                              type="file"
+                              required
+                              accept="image/*"
+                              onChange={(e) => setPageImageFile(e.target.files[0])}
+                              className="w-full bg-white border border-brand-brown/20 rounded px-4 py-2 text-sm text-brand-brown focus:outline-none focus:border-brand-gold transition-colors"
+                            />
+                          </div>
+
+                          <button
+                            type="submit"
+                            disabled={actionLoading}
+                            className="w-full py-3 bg-brand-gold hover:bg-brand-gold/90 text-brand-lightBg font-bold rounded uppercase tracking-wider text-xs shadow-md transition-colors"
+                          >
+                            {actionLoading ? 'Uploading...' : 'Save Website Image'}
+                          </button>
+                        </form>
+                      </div>
+
+                      {/* Right: Current Images Grid */}
+                      <div className="lg:col-span-8 flex flex-col space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <h2 className="font-playfair text-2xl font-bold text-brand-brown">Custom Page Images</h2>
+                            <span className="font-telugu text-brand-muted text-lg tracking-wide ml-2">వెబ్‌సైట్ చిత్రాలు</span>
+                          </div>
+                          <span className="text-xs text-brand-brown/70 font-semibold uppercase bg-brand-beige px-3 py-1 rounded-full">{pageImages.length} active customizations</span>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {pageImages.length === 0 ? (
+                            <div className="col-span-2 border border-dashed border-brand-brown/25 rounded-lg flex items-center justify-center p-8 text-center text-brand-muted text-sm bg-brand-beige/30">
+                              No custom images uploaded yet. Default placeholders will be loaded.
+                            </div>
+                          ) : (
+                            pageImages.map((img) => (
+                              <div key={img._id} className="p-4 rounded-lg bg-white border border-brand-brown/10 glass-card flex flex-col space-y-3 shadow-sm">
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <h4 className="font-bold text-brand-brown text-base">{img.label}</h4>
+                                    <code className="text-xs text-brand-gold bg-brand-beige/60 px-1.5 py-0.5 rounded font-mono block mt-0.5">{img.key}</code>
+                                  </div>
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider bg-brand-beige border border-brand-brown/10 text-brand-brown">
+                                    {img.page}
+                                  </span>
+                                </div>
+                                <div className="aspect-video w-full rounded overflow-hidden bg-brand-beige border border-brand-brown/5">
+                                  <img src={getImageUrl(img.imageUrl)} alt={img.label} className="w-full h-full object-cover" />
+                                </div>
+                                <div className="text-[10px] text-brand-brown/50 text-right">
+                                  Updated: {new Date(img.updatedAt || Date.now()).toLocaleString()}
+                                </div>
+                              </div>
+                            ))
+                          )}
                         </div>
                       </div>
                     </div>

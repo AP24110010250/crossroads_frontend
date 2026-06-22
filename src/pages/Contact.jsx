@@ -104,7 +104,9 @@ const Contact = () => {
                 <div className="flex flex-col space-y-1.5">
                   <span className="text-sm text-brand-gold uppercase font-black tracking-widest">Catering & Bookings</span>
                   <a href="tel:7337374444" className="text-xl md:text-2xl text-brand-brown hover:text-brand-red font-black">73373 74444</a>
-                  <span className="text-sm text-brand-muted font-bold">Email: catering@crossroadshotel.in</span>
+                  <span className="text-sm text-brand-muted font-bold">
+                    Email: <a href="mailto:catering@crossroadshotel.in" className="hover:text-brand-red underline transition-colors">catering@crossroadshotel.in</a>
+                  </span>
                 </div>
               </div>
 
@@ -128,7 +130,6 @@ const Contact = () => {
                 <div className="flex flex-col space-y-1.5">
                   <span className="text-sm text-brand-gold uppercase font-black tracking-widest">Online Presence</span>
                   <a href="https://www.instagram.com/crossroads_restaurant__/" target="_blank" rel="noopener noreferrer" className="hover:text-brand-red font-black text-lg md:text-xl">@crossroads_restaurant__</a>
-                  <span className="text-sm text-brand-muted font-bold">Website: crossroadshotel.in</span>
                 </div>
               </div>
             </div>

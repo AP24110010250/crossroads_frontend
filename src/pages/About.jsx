@@ -1,11 +1,26 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Navbar from '../components/sections/Navbar';
 import Footer from '../components/sections/Footer';
 import SmoothScroll from '../components/animations/SmoothScroll';
 import { motion } from 'framer-motion';
-import { getImageUrl } from '../utils/imageHelper';
+import { usePageImages } from '../context/ImageContext';
+import { Check, X, Phone, Shield, Sparkles, MapPin, Music, HelpCircle } from 'lucide-react';
 
 const About = () => {
+  const { getDynamicImage } = usePageImages();
+
+  // Scroll to hash element if available
+  useEffect(() => {
+    if (window.location.hash) {
+      const element = document.querySelector(window.location.hash);
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }, 150);
+      }
+    }
+  }, []);
+
   return (
     <SmoothScroll>
       <div className="relative min-h-screen bg-brand-lightBg text-brand-brown flex flex-col pt-[72px]">
@@ -14,11 +29,10 @@ const About = () => {
         {/* Cinematic Header */}
         <section className="relative py-24 bg-brand-beige overflow-hidden flex items-center justify-center text-center px-6">
           <div className="absolute inset-0 opacity-[0.03] pointer-events-none">
-            <img src={getImageUrl('/placeholders/hero-interior.webp')} alt="Old Vijayawada Restaurant" className="w-full h-full object-cover" />
+            <img src={getDynamicImage('about_header_bg', '/placeholders/hero-interior.webp')} alt="Old Vijayawada Restaurant" className="w-full h-full object-cover" />
           </div>
           
           <div className="relative z-10 flex flex-col items-center max-w-3xl">
-            {/* Enlarged Telugu Headline */}
             <span className="text-brand-red font-telugu text-2xl md:text-4xl font-bold mb-3 block tracking-wide">
               మా చరిత్ర ప్రస్థానం — పాతికేళ్ల విశ్వసనీయత
             </span>
@@ -52,7 +66,7 @@ const About = () => {
             </div>
             <div className="w-full lg:w-1/2 flex items-center justify-center">
               <div className="relative w-full max-w-lg aspect-[4/3] rounded-lg overflow-hidden border border-brand-gold/30 gold-glow bg-brand-beige">
-                <img src={getImageUrl('/placeholders/family-dining.webp')} alt="Family Legacy Dining" className="w-full h-full object-cover filter brightness-[0.93] sepia-[0.1]" />
+                <img src={getDynamicImage('about_founding', '/placeholders/family-dining.webp')} alt="Family Legacy Dining" className="w-full h-full object-cover filter brightness-[0.93] sepia-[0.1]" />
                 <div className="absolute inset-0 bg-gradient-to-t from-brand-brown/30 to-transparent" />
               </div>
             </div>
@@ -67,7 +81,6 @@ const About = () => {
           
           <div className="max-w-7xl mx-auto flex flex-col lg:flex-row-reverse items-center gap-12">
             <div className="w-full lg:w-1/2 flex flex-col space-y-6 z-10">
-              {/* Enlarged Telugu script heading */}
               <span className="text-brand-red font-telugu text-xl md:text-3xl font-bold">మా ఆహార నియమాలు — సహజ రుచులు</span>
               <span className="text-brand-gold uppercase tracking-[0.3em] text-xs font-bold">Culinary Values</span>
               <h2 className="font-playfair text-3xl md:text-5xl font-bold text-brand-brown">
@@ -82,17 +95,135 @@ const About = () => {
             </div>
             <div className="w-full lg:w-1/2 flex items-center justify-center z-10">
               <div className="relative w-full max-w-lg aspect-[4/3] rounded-lg overflow-hidden border border-brand-gold/30 gold-glow bg-brand-lightBg">
-                <img src={getImageUrl('/placeholders/andhra-thali.webp')} alt="Traditional Andhra Thali Platter" className="w-full h-full object-cover filter brightness-[0.93]" />
+                <img src={getDynamicImage('about_philosophy', '/placeholders/andhra-thali-premium.png')} alt="Traditional Andhra Thali Platter" className="w-full h-full object-cover filter brightness-[0.93]" />
                 <div className="absolute inset-0 bg-gradient-to-t from-brand-brown/20 to-transparent" />
               </div>
             </div>
           </div>
         </section>
 
-        {/* Section 3: Vision & The Future */}
-        <section className="py-24 px-6 md:px-12 bg-brand-lightBg mb-12">
+        {/* Section 3: Banquet Hall Details (Dynamic ID) */}
+        <section id="banquet" className="py-24 px-6 md:px-12 bg-brand-lightBg border-b border-brand-brown/5 scroll-mt-20">
+          <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16">
+            
+            {/* Left side: Images and configuration grid */}
+            <div className="w-full lg:w-1/2 flex flex-col space-y-6">
+              <div className="relative w-full aspect-[4/3] rounded-lg overflow-hidden border border-brand-gold/30 gold-glow bg-brand-beige">
+                <img src={getDynamicImage('about_banquet', '/placeholders/hero-interior.webp')} alt="Cross Roads Banquet Hall Seating" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-brand-brown/20 to-transparent" />
+              </div>
+
+              {/* Event Space configurations table */}
+              <div className="bg-white p-6 rounded-lg border border-brand-brown/10 shadow-sm">
+                <h4 className="font-playfair font-bold text-lg text-brand-brown mb-3 border-b border-brand-brown/10 pb-1.5 flex items-center gap-1.5">
+                  <Sparkles size={16} className="text-brand-red" />
+                  <span>Event Spaces Configurations</span>
+                </h4>
+                <div className="overflow-x-auto text-xs md:text-sm">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-brand-brown/15 text-brand-gold uppercase tracking-wider font-extrabold text-[10px] pb-2">
+                        <th className="py-2">Space Type</th>
+                        <th className="py-2">Capacity</th>
+                        <th className="py-2">Veg Starting</th>
+                        <th className="py-2">Non-Veg Starting</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-brand-brown/5 font-medium text-brand-brown/85">
+                      <tr>
+                        <td className="py-3 font-bold">Restaurant Space</td>
+                        <td className="py-3">10 - 60 Guests</td>
+                        <td className="py-3 text-brand-red">₹500 / plate</td>
+                        <td className="py-3 text-brand-red">₹500 / plate</td>
+                      </tr>
+                      <tr>
+                        <td className="py-3 font-bold">AC Banquet Hall</td>
+                        <td className="py-3">50 - 100 Guests</td>
+                        <td className="py-3 text-brand-red">₹500 / plate</td>
+                        <td className="py-3 text-brand-red">₹500 / plate</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            {/* Right side: Detailed policies & content */}
+            <div className="w-full lg:w-1/2 flex flex-col space-y-6">
+              <span className="text-brand-gold font-telugu text-xl md:text-2xl font-bold">శుభకార్యాల సదుపాయాలు — వైభవోపేత వేదిక</span>
+              <span className="text-brand-red uppercase tracking-[0.3em] text-xs font-bold">Banquet Services & Policy</span>
+              <h2 className="font-playfair text-3xl md:text-5xl font-bold text-brand-brown">
+                Cross Roads Banquet Hall
+              </h2>
+              <p className="text-brand-muted text-sm md:text-base leading-relaxed">
+                Whether hosting a cozy family function, birthday party, wedding ceremony, or a corporate conference, our AC Banquet Hall in Moghalrajapuram, Vijayawada provides a luxury indoor space crafted to ensure a premium experience.
+              </p>
+
+              {/* Policy cards grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-4 rounded-lg bg-brand-beige border border-brand-brown/10 flex flex-col justify-between">
+                  <div className="flex items-center gap-1.5 font-bold text-brand-brown text-sm">
+                    <Check size={16} className="text-green-600 shrink-0" />
+                    <span>In-House Catering ONLY</span>
+                  </div>
+                  <p className="text-xs text-brand-brown/70 mt-1 leading-relaxed">
+                    Exquisite, high-quality vegetarian and non-vegetarian menus prepared in-house starting at just ₹500 per plate. Outside caterers are strictly not allowed.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-lg bg-brand-beige border border-brand-brown/10 flex flex-col justify-between">
+                  <div className="flex items-center gap-1.5 font-bold text-brand-brown text-sm">
+                    <Check size={16} className="text-green-600 shrink-0" />
+                    <span>Decorators Allowed</span>
+                  </div>
+                  <p className="text-xs text-brand-brown/70 mt-1 leading-relaxed">
+                    We offer professional in-house decorators, but we also allow you to bring your own outside decorators to customize the theme to your liking.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-lg bg-brand-beige border border-brand-brown/10 flex flex-col justify-between">
+                  <div className="flex items-center gap-1.5 font-bold text-brand-brown text-sm">
+                    <Check size={16} className="text-green-600 shrink-0" />
+                    <span>Valet & 50-Car Parking</span>
+                  </div>
+                  <p className="text-xs text-brand-brown/70 mt-1 leading-relaxed">
+                    Enjoy seamless arrivals with our spacious outdoor parking area accommodating up to 50 cars, complemented by professional valet parking service.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-lg bg-brand-beige border border-brand-brown/10 flex flex-col justify-between">
+                  <div className="flex items-center gap-1.5 font-bold text-brand-brown text-sm">
+                    <Music size={16} className="text-brand-red shrink-0" />
+                    <span>DJ & AV Equipment</span>
+                  </div>
+                  <p className="text-xs text-brand-brown/70 mt-1 leading-relaxed">
+                    Equipped with premium sound systems and a stage. In-house chargeable DJ is available, or you can bring your own outside DJ service.
+                  </p>
+                </div>
+              </div>
+
+              {/* Call-to-action */}
+              <div className="pt-4 border-t border-brand-brown/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase tracking-wider text-brand-brown/40 font-bold">Booking Enquiries</span>
+                  <a href="tel:8470804805" className="text-xl md:text-2xl font-black text-brand-red flex items-center gap-1 hover:underline">
+                    <Phone size={18} />
+                    <span>84708 04805</span>
+                  </a>
+                </div>
+                <div className="text-xs text-brand-brown/75 font-semibold leading-relaxed">
+                  <p className="flex items-center gap-1">📍 Moghalrajapuram, Vijayawada</p>
+                  <p className="flex items-center gap-1">🕒 Venue Hours: 11:00 AM to 11:00 PM</p>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        {/* Section 4: Vision & The Future */}
+        <section className="py-24 px-6 md:px-12 bg-brand-beige mb-12">
           <div className="max-w-4xl mx-auto text-center flex flex-col items-center space-y-6">
-            {/* Enlarged Telugu watermark header */}
             <span className="text-brand-red font-telugu text-2xl md:text-4xl font-bold block">భవిష్యత్ ఆశయం — కుటుంబ అనురాగాలు</span>
             <span className="text-brand-gold uppercase tracking-[0.3em] text-xs font-bold">Vision for Hospitality</span>
             <h2 className="font-playfair text-3xl md:text-5xl font-bold text-brand-brown">
