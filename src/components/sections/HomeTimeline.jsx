@@ -2,35 +2,38 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Award, Sparkles, MapPin } from 'lucide-react';
 import { getImageUrl } from '../../utils/imageHelper';
+import { usePageImages } from '../../context/ImageContext';
 
 const HomeTimeline = () => {
+  const { getDynamicImage } = usePageImages();
+
   const timelineEvents = [
     {
       year: '1999',
       title: 'Governorpet Branch',
       description: 'The beginning of our journey. Introducing traditional firewood cooking and authentic Andhra recipes to Vijayawada.',
-      image: '/placeholders/hero-interior.webp',
+      image: getDynamicImage('home_timeline_1999', '/placeholders/hero-interior.webp'),
       icon: <Award className="text-brand-gold" size={22} />
     },
     {
       year: '2008',
       title: 'Moghalrajapuram Branch',
       description: 'Expansion of dine-in capacity and launch of our legendary traditional sweets confectioneries.',
-      image: '/placeholders/sweets-counter.webp',
+      image: getDynamicImage('home_timeline_2008', '/placeholders/sweets-counter.webp'),
       icon: <Sparkles className="text-brand-gold" size={22} />
     },
     {
       year: '2017',
       title: 'Gollapudi Highway Branch',
       description: 'Opening a landmark stopover destination for travelers on the Hyderabad Highway.',
-      image: '/placeholders/hero-food.webp',
+      image: getDynamicImage('home_timeline_2017', '/placeholders/hero-food.webp'),
       icon: <MapPin className="text-brand-gold" size={22} />
     },
     {
       year: '2023',
       title: 'Gannavaram Airport Branch',
       description: 'A premium luxury destination serving iconic breakfasts and specialties near the airport.',
-      image: '/placeholders/family-dining.webp',
+      image: getDynamicImage('home_timeline_2023', '/placeholders/family-dining.webp'),
       icon: <Calendar className="text-brand-gold" size={22} />
     }
   ];

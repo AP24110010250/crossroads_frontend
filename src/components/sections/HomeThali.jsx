@@ -11,37 +11,37 @@ const HomeThali = () => {
       name: "Steaming Rice",
       telugu: "వేడి వేడి అన్నం",
       desc: "Pure Sona Masuri rice, served hot in the center.",
-      position: { top: "35%", left: "45%" }
+      position: { top: "53%", left: "47%" }
     },
     {
       name: "Ghee Pappu",
       telugu: "ముద్ద పప్పు",
       desc: "Creamy lentils served with a dollop of cow ghee.",
-      position: { top: "25%", left: "30%" }
+      position: { top: "33%", left: "33%" }
     },
     {
       name: "Andhra Avakai & Gongura",
       telugu: "ఆవకాయ & గోంగూర పచ్చడి",
       desc: "Stone-ground Gongura chutney and raw mango pickle.",
-      position: { top: "25%", left: "60%" }
+      position: { top: "33%", left: "60%" }
     },
     {
       name: "Vegetable Koora & Fry",
       telugu: "కూరలు & వేపుడు",
       desc: "Fresh vegetable curries and seasonal stir-fries.",
-      position: { top: "55%", left: "20%" }
+      position: { top: "53%", left: "18%" }
     },
     {
       name: "Traditional Sweet",
       telugu: "మధుర పిండివంటలు",
       desc: "Handcrafted Bandar Laddu or milk sweets prepared daily.",
-      position: { top: "50%", left: "75%" }
+      position: { top: "68%", left: "68%" }
     },
     {
       name: "Thick Buffalo Curd",
       telugu: "గట్టి పెరుగు",
       desc: "Thick, cooling buffalo curd to complete the feast.",
-      position: { top: "65%", left: "55%" }
+      position: { top: "74%", left: "53%" }
     }
   ];
 

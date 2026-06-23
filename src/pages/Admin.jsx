@@ -4,16 +4,25 @@ import Footer from '../components/sections/Footer';
 import SmoothScroll from '../components/animations/SmoothScroll';
 import { getImageUrl } from '../utils/imageHelper';
 import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { 
   Lock, Calendar, Utensils, Star, Image as ImageIcon, MapPin, 
   Check, X, Trash2, Plus, Edit, RefreshCw, AlertCircle, Sparkles, CheckCircle2,
-  Tag, FileImage
+  Tag, FileImage, LogOut
 } from 'lucide-react';
 
 const Admin = () => {
-  const { isAuthenticated, login, user, token, API_URL } = useAuth();
+  const { isAuthenticated, login, logout, user, token, API_URL } = useAuth();
   
+  // Mobile check
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Login form state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -43,13 +52,26 @@ const Admin = () => {
     description: '',
     price: '',
     priceHalf: '',
-    category: 'Breakfast',
+    category: '',
     isVeg: false,
     isChefSpecial: false,
     isStarred: false,
     imageFile: null
   });
   const [editingMenuId, setEditingMenuId] = useState(null);
+
+  // Category Form State
+  const [categoryInput, setCategoryInput] = useState('');
+
+  // Testimonial Form State
+  const [testimonialForm, setTestimonialForm] = useState({
+    name: '',
+    rating: 5,
+    comment: '',
+    designation: 'Happy Diner',
+    approved: true
+  });
+  const [editingTestimonialId, setEditingTestimonialId] = useState(null);
 
   // Gallery Creation Form State
   const [galleryForm, setGalleryForm] = useState({
@@ -59,12 +81,34 @@ const Admin = () => {
     imageFile: null
   });
 
-  // Category Form State
-  const [categoryInput, setCategoryInput] = useState('');
-
-  // Page Image upload form state
+  // Page Image customization state
+  const [pageFilter, setPageFilter] = useState('home');
   const [selectedPageImageKey, setSelectedPageImageKey] = useState('');
   const [pageImageFile, setPageImageFile] = useState(null);
+
+  // Customizer image mappings (Cards and items only, no background images)
+  const homePageOptions = [
+    { key: 'home_hero_biryani', label: 'Home Hero Biryani Item' },
+    { key: 'home_hero_thali', label: 'Home Hero Thali Item' },
+    { key: 'home_hero_idly', label: 'Home Hero Idly Item' },
+    { key: 'home_thali', label: 'Home Thali Experience Section' },
+    { key: 'home_sweets', label: 'Home Sweets Experience Section' },
+    { key: 'home_banquet', label: 'Home Banquet Section Image' },
+    { key: 'home_timeline_1999', label: 'Timeline 1999 Image (25 Yrs Journey)' },
+    { key: 'home_timeline_2008', label: 'Timeline 2008 Image (25 Yrs Journey)' },
+    { key: 'home_timeline_2017', label: 'Timeline 2017 Image (25 Yrs Journey)' },
+    { key: 'home_timeline_2023', label: 'Timeline 2023 Image (25 Yrs Journey)' },
+    { key: 'home_branch_governorpet', label: 'Governorpet Branch Image' },
+    { key: 'home_branch_moghalrajapuram', label: 'Moghalrajapuram Branch Image' },
+    { key: 'home_branch_gollapudi', label: 'Gollapudi Branch Image' },
+    { key: 'home_branch_gannavaram', label: 'Gannavaram Branch Image' }
+  ];
+
+  const aboutPageOptions = [
+    { key: 'about_founding', label: 'About Founding Legacy Section' },
+    { key: 'about_philosophy', label: 'About Culinary Philosophy Section' },
+    { key: 'about_banquet', label: 'About Banquet Hall Section Details' }
+  ];
 
   // Branch Editing Form State
   const [selectedBranch, setSelectedBranch] = useState(null);
@@ -75,6 +119,7 @@ const Admin = () => {
     googleMapsLink: '',
     description: ''
   });
+  const [branchImageFile, setBranchImageFile] = useState(null);
 
   // Load resources based on tab
   useEffect(() => {
@@ -95,18 +140,13 @@ const Admin = () => {
         const res = await axios.get(`${API_URL}/menu`);
         if (res.data.success) setMenuItems(res.data.data);
         
-        // Also load categories for the select dropdown
         const catRes = await axios.get(`${API_URL}/categories`);
         if (catRes.data.success) {
           setCategories(catRes.data.data);
-          // Set default category in menuForm if categories exist and form category is empty or default
           if (catRes.data.data.length > 0 && !menuForm.category) {
             setMenuForm(prev => ({ ...prev, category: catRes.data.data[0].name }));
           }
         }
-      } else if (activeTab === 'categories') {
-        const res = await axios.get(`${API_URL}/categories`);
-        if (res.data.success) setCategories(res.data.data);
       } else if (activeTab === 'testimonials') {
         const res = await axios.get(`${API_URL}/testimonials?all=true`);
         if (res.data.success) setTestimonials(res.data.data);
@@ -169,7 +209,52 @@ const Admin = () => {
     }
   };
 
-  // Testimonial actions
+  // Testimonial CRUD actions
+  const handleTestimonialInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setTestimonialForm({
+      ...testimonialForm,
+      [name]: type === 'checkbox' ? checked : value
+    });
+  };
+
+  const handleTestimonialSubmit = async (e) => {
+    e.preventDefault();
+    setActionLoading(true);
+    try {
+      if (editingTestimonialId) {
+        const res = await axios.put(`${API_URL}/testimonials/${editingTestimonialId}`, testimonialForm);
+        if (res.data.success) {
+          alert('Testimonial updated successfully!');
+          resetTestimonialForm();
+          fetchTabResources();
+        }
+      } else {
+        const res = await axios.post(`${API_URL}/testimonials`, testimonialForm);
+        if (res.data.success) {
+          alert('Testimonial created successfully!');
+          resetTestimonialForm();
+          fetchTabResources();
+        }
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Testimonial operation failed.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleEditTestimonialSelect = (item) => {
+    setEditingTestimonialId(item._id);
+    setTestimonialForm({
+      name: item.name,
+      rating: item.rating,
+      comment: item.comment,
+      designation: item.designation || 'Happy Diner',
+      approved: item.approved
+    });
+  };
+
   const handleApproveTestimonial = async (id) => {
     setActionLoading(true);
     try {
@@ -199,7 +284,18 @@ const Admin = () => {
     }
   };
 
-  // Menu Form Change Handlers
+  const resetTestimonialForm = () => {
+    setEditingTestimonialId(null);
+    setTestimonialForm({
+      name: '',
+      rating: 5,
+      comment: '',
+      designation: 'Happy Diner',
+      approved: true
+    });
+  };
+
+  // Menu Form Handlers
   const handleMenuInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setMenuForm({
@@ -217,7 +313,6 @@ const Admin = () => {
     e.preventDefault();
     setActionLoading(true);
     
-    // Validate Signature Curations Starred constraints
     const starredCount = menuItems.filter(item => item.isStarred && item._id !== editingMenuId).length;
     if (menuForm.isStarred && starredCount >= 6) {
       alert('You can star a maximum of 6 items for the home page Signature Curations section.');
@@ -241,7 +336,6 @@ const Admin = () => {
 
     try {
       if (editingMenuId) {
-        // Edit Mode
         const res = await axios.put(`${API_URL}/menu/${editingMenuId}`, formDataToSend, {
           headers: { 'Content-Type': 'multipart/form-data' }
         });
@@ -252,7 +346,6 @@ const Admin = () => {
           resetMenuForm();
         }
       } else {
-        // Create Mode
         if (!menuForm.imageFile) {
           alert('Please upload an image for the dish!');
           setActionLoading(false);
@@ -304,6 +397,37 @@ const Admin = () => {
     }
   };
 
+  const handleToggleMenuStar = async (item) => {
+    setActionLoading(true);
+    try {
+      const updatedStarred = !item.isStarred;
+      if (updatedStarred) {
+        const starredCount = menuItems.filter(m => m.isStarred).length;
+        if (starredCount >= 6) {
+          alert('You can star a maximum of 6 items for the home page Signature Curations section.');
+          setActionLoading(false);
+          return;
+        }
+      } else {
+        const starredCount = menuItems.filter(m => m.isStarred).length;
+        if (starredCount <= 3) {
+          alert('You must have at least 3 starred menu items for Our Signature Curations. Please star another item before unstarring this one.');
+          setActionLoading(false);
+          return;
+        }
+      }
+
+      const res = await axios.put(`${API_URL}/menu/${item._id}`, { isStarred: updatedStarred });
+      if (res.data.success) {
+        setMenuItems(prev => prev.map(m => m._id === item._id ? { ...m, isStarred: updatedStarred } : m));
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update menu star status.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const resetMenuForm = () => {
     setEditingMenuId(null);
     setMenuForm({
@@ -319,6 +443,45 @@ const Admin = () => {
     });
   };
 
+  // Category CRUD actions inside Menu Tab
+  const handleCategoryCreate = async (e) => {
+    e.preventDefault();
+    if (!categoryInput.trim()) return;
+    setActionLoading(true);
+    try {
+      const res = await axios.post(`${API_URL}/categories`, { name: categoryInput.trim() });
+      if (res.data.success) {
+        alert('Category added successfully!');
+        setCategoryInput('');
+        // Reload categories for dropdown
+        const catRes = await axios.get(`${API_URL}/categories`);
+        if (catRes.data.success) setCategories(catRes.data.data);
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to add category.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleCategoryDelete = async (id) => {
+    if (!window.confirm('Delete this category permanently? This may affect items tied to this category.')) return;
+    setActionLoading(true);
+    try {
+      const res = await axios.delete(`${API_URL}/categories/${id}`);
+      if (res.data.success) {
+        alert('Category deleted successfully!');
+        // Reload categories
+        const catRes = await axios.get(`${API_URL}/categories`);
+        if (catRes.data.success) setCategories(catRes.data.data);
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to delete category.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   // Gallery actions
   const handleGallerySubmit = async (e) => {
     e.preventDefault();
@@ -328,7 +491,6 @@ const Admin = () => {
     }
     setActionLoading(true);
     
-    // Starred count check
     if (galleryForm.isStarred && galleryForm.category === 'Tollywood Wall') {
       const currentStarredCount = galleryItems.filter(g => g.isStarred && g.category === 'Tollywood Wall').length;
       if (currentStarredCount >= 5) {
@@ -365,7 +527,6 @@ const Admin = () => {
     try {
       const updatedStarred = !item.isStarred;
       
-      // Enforce the requirement: exactly 5 images are displayed on Tollywood Wall
       if (item.category === 'Tollywood Wall') {
         const currentStarredCount = galleryItems.filter(g => g.isStarred && g.category === 'Tollywood Wall' && g._id !== item._id).length;
         if (updatedStarred && currentStarredCount >= 5) {
@@ -386,37 +547,6 @@ const Admin = () => {
     }
   };
 
-  const handleToggleMenuStar = async (item) => {
-    setActionLoading(true);
-    try {
-      const updatedStarred = !item.isStarred;
-      if (updatedStarred) {
-        const starredCount = menuItems.filter(m => m.isStarred).length;
-        if (starredCount >= 6) {
-          alert('You can star a maximum of 6 items for the home page Signature Curations section.');
-          setActionLoading(false);
-          return;
-        }
-      } else {
-        const starredCount = menuItems.filter(m => m.isStarred).length;
-        if (starredCount <= 3) {
-          alert('You must have at least 3 starred menu items for Our Signature Curations. Please star another item before unstarring this one.');
-          setActionLoading(false);
-          return;
-        }
-      }
-
-      const res = await axios.put(`${API_URL}/menu/${item._id}`, { isStarred: updatedStarred });
-      if (res.data.success) {
-        setMenuItems(prev => prev.map(m => m._id === item._id ? { ...m, isStarred: updatedStarred } : m));
-      }
-    } catch (err) {
-      alert(err.response?.data?.message || 'Failed to update menu star status.');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
   const handleDeleteGalleryItem = async (id) => {
     if (!window.confirm('Delete this image from gallery?')) return;
     setActionLoading(true);
@@ -432,42 +562,7 @@ const Admin = () => {
     }
   };
 
-  // Category CRUD actions
-  const handleCategoryCreate = async (e) => {
-    e.preventDefault();
-    if (!categoryInput.trim()) return;
-    setActionLoading(true);
-    try {
-      const res = await axios.post(`${API_URL}/categories`, { name: categoryInput.trim() });
-      if (res.data.success) {
-        alert('Category added successfully!');
-        setCategoryInput('');
-        fetchTabResources();
-      }
-    } catch (err) {
-      alert(err.response?.data?.message || 'Failed to add category.');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleCategoryDelete = async (id) => {
-    if (!window.confirm('Delete this category permanently?')) return;
-    setActionLoading(true);
-    try {
-      const res = await axios.delete(`${API_URL}/categories/${id}`);
-      if (res.data.success) {
-        alert('Category deleted successfully!');
-        fetchTabResources();
-      }
-    } catch (err) {
-      alert(err.response?.data?.message || 'Failed to delete category.');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  // Page Image upload actions
+  // Page Image upload actions (restructured)
   const handlePageImageSubmit = async (e) => {
     e.preventDefault();
     if (!selectedPageImageKey || !pageImageFile) {
@@ -479,34 +574,17 @@ const Admin = () => {
     fd.append('image', pageImageFile);
 
     const existing = pageImages.find(img => img.key === selectedPageImageKey);
-    const labelMapping = {
-      'home_hero_bg': { label: 'Home Hero Background', page: 'home' },
-      'home_hero_biryani': { label: 'Home Hero Biryani Item', page: 'home' },
-      'home_hero_thali': { label: 'Home Hero Thali Item', page: 'home' },
-      'home_hero_idly': { label: 'Home Hero Idly Item', page: 'home' },
-      'home_thali': { label: 'Home Thali Experience Section', page: 'home' },
-      'home_sweets': { label: 'Home Sweets Experience Section', page: 'home' },
-      'home_banquet': { label: 'Home Banquet Section Image', page: 'home' },
-      'about_header_bg': { label: 'About Header Background', page: 'about' },
-      'about_founding': { label: 'About Founding Legacy Section', page: 'about' },
-      'about_philosophy': { label: 'About Culinary Philosophy Section', page: 'about' },
-      'about_banquet': { label: 'About Banquet Hall Section Details', page: 'about' }
-    };
-    const details = existing || labelMapping[selectedPageImageKey];
-    if (details) {
-      fd.append('label', details.label);
-      fd.append('page', details.page);
-    } else {
-      fd.append('label', selectedPageImageKey.replace(/_/g, ' '));
-      fd.append('page', selectedPageImageKey.startsWith('about_') ? 'about' : 'home');
-    }
+    const mapping = [...homePageOptions, ...aboutPageOptions].find(opt => opt.key === selectedPageImageKey);
+    
+    fd.append('label', existing?.label || mapping?.label || selectedPageImageKey);
+    fd.append('page', pageFilter);
 
     try {
       const res = await axios.put(`${API_URL}/page-images/${selectedPageImageKey}`, fd, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       if (res.data.success) {
-        alert('Image updated successfully!');
+        alert('Website image updated successfully!');
         setPageImageFile(null);
         setSelectedPageImageKey('');
         fetchTabResources();
@@ -528,16 +606,34 @@ const Admin = () => {
       googleMapsLink: branch.googleMapsLink,
       description: branch.description || ''
     });
+    setBranchImageFile(null);
   };
 
   const handleBranchSubmit = async (e) => {
     e.preventDefault();
     setActionLoading(true);
+
+    const syncFooter = window.confirm("Would you like to synchronize these address and phone number details to the footer as well?");
+
+    const fd = new FormData();
+    fd.append('address', branchForm.address);
+    fd.append('phone', branchForm.phone);
+    fd.append('timings', branchForm.timings);
+    fd.append('googleMapsLink', branchForm.googleMapsLink);
+    fd.append('description', branchForm.description);
+    fd.append('updateFooter', syncFooter);
+    if (branchImageFile) {
+      fd.append('image', branchImageFile);
+    }
+
     try {
-      const res = await axios.put(`${API_URL}/branches/${selectedBranch._id}`, branchForm);
+      const res = await axios.put(`${API_URL}/branches/${selectedBranch._id}`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       if (res.data.success) {
         alert('Branch details updated successfully!');
         setSelectedBranch(null);
+        setBranchImageFile(null);
         fetchTabResources();
       }
     } catch (err) {
@@ -547,58 +643,76 @@ const Admin = () => {
     }
   };
 
+  // Desktop block screen for mobile
+  if (isMobile) {
+    return (
+      <div className="min-h-screen bg-brand-lightBg text-brand-brown flex flex-col justify-center items-center p-6 text-center">
+        <div className="max-w-md p-8 bg-white border border-brand-brown/10 rounded-xl shadow-lg flex flex-col items-center space-y-4">
+          <AlertCircle size={48} className="text-brand-red animate-pulse" />
+          <h2 className="font-playfair text-2xl font-bold">Desktop Access Only</h2>
+          <p className="text-sm text-brand-muted leading-relaxed">
+            The Admin Portal is optimized for desktop screens to ensure secure and efficient management. Please log in from a desktop browser.
+          </p>
+          <Link to="/" className="px-6 py-2.5 bg-brand-red text-white font-bold rounded uppercase tracking-wider text-xs">
+            Back to Home
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <SmoothScroll>
-      <div className="relative min-h-screen bg-brand-lightBg text-brand-brown flex flex-col pt-[72px]">
+      <div className="relative min-h-screen bg-[#FAF6EE] text-brand-brown flex flex-col pt-[72px]">
         <Navbar />
 
-        {/* Dashboard Frame */}
-        <div className="flex-grow max-w-7xl mx-auto w-full py-12 px-6 md:px-12 z-10 text-brand-brown">
+        {/* Simplified Dashboard Frame */}
+        <div className="flex-grow max-w-7xl mx-auto w-full py-8 px-6 md:px-12 z-10 text-brand-brown">
           
           {/* 1. Login Gate Screen */}
           {!isAuthenticated ? (
-            <div className="max-w-md mx-auto my-12 p-8 bg-white border border-brand-brown/10 rounded-xl shadow-lg glass-card flex flex-col space-y-6">
+            <div className="max-w-md mx-auto my-12 p-8 bg-white border border-brand-brown/10 rounded-xl shadow-md flex flex-col space-y-6">
               <div className="text-center flex flex-col items-center">
-                <div className="w-14 h-14 rounded-full bg-brand-gold/10 flex items-center justify-center text-brand-gold mb-3">
-                  <Lock size={24} />
+                <div className="w-12 h-12 rounded-full bg-brand-gold/10 flex items-center justify-center text-brand-gold mb-2">
+                  <Lock size={20} />
                 </div>
-                <h2 className="font-playfair text-3xl font-bold text-brand-brown">Admin Portal</h2>
-                <span className="text-sm text-brand-muted mt-1 uppercase tracking-widest font-semibold">Sign in to manage crossroads</span>
+                <h2 className="font-playfair text-2xl font-bold text-brand-brown">Admin Portal</h2>
+                <span className="text-xs text-brand-muted mt-1 uppercase tracking-widest font-semibold">Sign in to manage Crossroads</span>
               </div>
 
-              <form onSubmit={handleLoginSubmit} className="flex flex-col space-y-5">
+              <form onSubmit={handleLoginSubmit} className="flex flex-col space-y-4 text-xs">
                 {loginError && (
-                  <div className="p-3 rounded bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-1.5 font-medium">
-                    <AlertCircle size={16} className="shrink-0 text-red-500" />
+                  <div className="p-3 rounded bg-red-50 border border-red-200 text-red-700 font-medium flex items-center gap-1.5">
+                    <AlertCircle size={14} className="shrink-0 text-red-500" />
                     <span>{loginError}</span>
                   </div>
                 )}
                 <div className="flex flex-col space-y-1">
-                  <label className="text-xs uppercase tracking-wider text-brand-gold font-bold">Email Address</label>
+                  <label className="uppercase tracking-wider text-brand-gold font-bold">Email Address</label>
                   <input
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="e.g. admin@crossroads.com"
-                    className="w-full bg-white border border-brand-brown/20 rounded px-4 py-2.5 text-sm text-brand-brown focus:outline-none focus:border-brand-gold transition-colors shadow-sm"
+                    placeholder="admin@crossroads.com"
+                    className="w-full bg-white border border-brand-brown/20 rounded px-3 py-2 text-sm text-brand-brown focus:outline-none focus:border-brand-gold transition-colors"
                   />
                 </div>
                 <div className="flex flex-col space-y-1">
-                  <label className="text-xs uppercase tracking-wider text-brand-gold font-bold">Password</label>
+                  <label className="uppercase tracking-wider text-brand-gold font-bold">Password</label>
                   <input
                     type="password"
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full bg-white border border-brand-brown/20 rounded px-4 py-2.5 text-sm text-brand-brown focus:outline-none focus:border-brand-gold transition-colors shadow-sm"
+                    className="w-full bg-white border border-brand-brown/20 rounded px-3 py-2 text-sm text-brand-brown focus:outline-none focus:border-brand-gold transition-colors"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={loginLoading}
-                  className="w-full py-4 bg-brand-red text-brand-lightBg uppercase text-sm font-bold rounded tracking-wider border border-brand-red/20 gold-glow-hover flex items-center justify-center disabled:opacity-50 mt-2 hover:bg-brand-red/90 transition-colors"
+                  className="w-full py-3 bg-brand-red text-brand-lightBg uppercase text-xs font-bold rounded tracking-wider disabled:opacity-50 mt-2 hover:bg-brand-red/90 transition-colors"
                 >
                   {loginLoading ? 'Authenticating...' : 'Sign In'}
                 </button>
@@ -606,58 +720,64 @@ const Admin = () => {
             </div>
           ) : (
             // 2. Logged-in Dashboard Area
-            <div className="flex flex-col space-y-8">
+            <div className="flex flex-col space-y-6">
               
-              {/* Dashboard Admin Title */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-brand-brown/10 pb-6">
-                <div className="flex flex-col">
-                  <span className="text-brand-gold uppercase tracking-[0.2em] font-semibold text-xs">
-                    MERN Dashboard — Role: {user?.role || 'Owner'}
+              {/* Sleek dashboard header */}
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-brand-brown/10 pb-4">
+                <div>
+                  <span className="text-[10px] text-brand-gold uppercase tracking-[0.25em] font-bold">
+                    MERN Portal &bull; Role: {user?.role || 'Owner'}
                   </span>
-                  <h1 className="font-playfair text-4xl font-bold text-brand-brown mt-1">
-                    Welcome, <span className="text-brand-gold italic">{user?.username || 'Admin'}</span>
+                  <h1 className="font-playfair text-3xl font-bold text-brand-brown">
+                    Dashboard: <span className="text-brand-gold italic">{user?.username || 'Admin'}</span>
                   </h1>
                 </div>
                 
-                {/* Tab Navigation buttons */}
-                <div className="flex flex-wrap items-center gap-2">
+                {/* Tab selector menu */}
+                <div className="flex flex-wrap items-center gap-1.5">
                   {[
-                    { id: 'reservations', label: 'Reservations', icon: <Calendar size={18} /> },
-                    { id: 'menu', label: 'Menu CRUD', icon: <Utensils size={18} /> },
-                    { id: 'categories', label: 'Category CRUD', icon: <Tag size={18} /> },
-                    { id: 'testimonials', label: 'Testimonials', icon: <Star size={18} /> },
-                    { id: 'gallery', label: 'Gallery', icon: <ImageIcon size={18} /> },
-                    { id: 'pageImages', label: 'Page Images', icon: <FileImage size={18} /> },
-                    { id: 'branches', label: 'Branches', icon: <MapPin size={18} /> }
+                    { id: 'reservations', label: 'Reservations', icon: <Calendar size={15} /> },
+                    { id: 'menu', label: 'Menu & Categories', icon: <Utensils size={15} /> },
+                    { id: 'testimonials', label: 'Testimonials', icon: <Star size={15} /> },
+                    { id: 'gallery', label: 'Gallery', icon: <ImageIcon size={15} /> },
+                    { id: 'pageImages', label: 'Pages Settings', icon: <FileImage size={15} /> },
+                    { id: 'branches', label: 'Branches', icon: <MapPin size={15} /> }
                   ].map((tab) => (
                     <button
                       key={tab.id}
-                      onClick={() => { setActiveTab(tab.id); resetMenuForm(); setSelectedBranch(null); }}
-                      className={`px-5 py-3 rounded text-sm uppercase font-bold tracking-wider flex items-center gap-2 transition-all ${
+                      onClick={() => { setActiveTab(tab.id); resetMenuForm(); resetTestimonialForm(); setSelectedBranch(null); }}
+                      className={`px-3.5 py-2 rounded text-xs uppercase font-extrabold tracking-wider flex items-center gap-1.5 transition-all ${
                         activeTab === tab.id 
-                          ? 'bg-brand-gold text-brand-lightBg shadow-md' 
-                          : 'bg-brand-beige border border-brand-brown/10 hover:border-brand-gold text-brand-brown/80'
+                          ? 'bg-brand-gold text-brand-lightBg shadow-sm' 
+                          : 'bg-white border border-brand-brown/10 hover:border-brand-gold text-brand-brown'
                       }`}
                     >
                       {tab.icon}
                       <span>{tab.label}</span>
                     </button>
                   ))}
+                  <button 
+                    onClick={logout}
+                    className="px-3.5 py-2 rounded text-xs uppercase font-extrabold tracking-wider flex items-center gap-1.5 bg-red-50 hover:bg-red-100 border border-red-200 text-red-750 ml-2"
+                  >
+                    <LogOut size={15} />
+                    <span>Log Out</span>
+                  </button>
                 </div>
               </div>
 
               {/* Loader */}
               {loading && (
-                <div className="flex flex-col items-center justify-center py-20 space-y-4">
-                  <RefreshCw className="animate-spin text-brand-gold" size={32} />
-                  <span className="text-sm text-brand-muted uppercase tracking-widest font-semibold">Loading Resources...</span>
+                <div className="flex flex-col items-center justify-center py-16 space-y-2">
+                  <RefreshCw className="animate-spin text-brand-gold" size={24} />
+                  <span className="text-xs text-brand-muted uppercase tracking-widest font-semibold">Loading...</span>
                 </div>
               )}
 
               {/* Error banner */}
               {error && (
-                <div className="p-4 rounded bg-red-50 border border-red-200 text-red-700 text-sm flex items-center gap-2 font-medium">
-                  <AlertCircle size={16} className="text-red-500 shrink-0" />
+                <div className="p-3.5 rounded bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2 font-medium">
+                  <AlertCircle size={14} className="text-red-500 shrink-0" />
                   <span>{error}</span>
                 </div>
               )}
@@ -668,84 +788,84 @@ const Admin = () => {
                   
                   {/* TAB 1: RESERVATIONS */}
                   {activeTab === 'reservations' && (
-                    <div className="flex flex-col space-y-6">
-                      <div className="flex items-center gap-2">
-                        <h2 className="font-playfair text-2xl font-bold text-brand-brown">Guest Reservation Requests</h2>
-                        <span className="font-telugu text-brand-muted text-lg tracking-wide ml-2">అతిథి రిజర్వేషన్లు</span>
+                    <div className="flex flex-col space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h2 className="font-playfair text-xl font-bold text-brand-brown">Guest Reservation Requests</h2>
+                        <span className="text-xs text-brand-brown/70 font-semibold uppercase bg-white border border-brand-brown/10 px-2.5 py-1 rounded">{reservations.length} records</span>
                       </div>
-                      <div className="overflow-x-auto border border-brand-brown/10 rounded-lg glass-card shadow-sm">
-                        <table className="w-full text-left border-collapse text-sm">
+                      <div className="overflow-x-auto border border-brand-brown/10 rounded-lg bg-white shadow-xs">
+                        <table className="w-full text-left border-collapse text-xs">
                           <thead>
-                            <tr className="border-b border-brand-brown/10 bg-brand-beige text-brand-brown uppercase tracking-wider text-xs font-bold">
-                              <th className="p-4">Guest</th>
-                              <th className="p-4">Contact</th>
-                              <th className="p-4">Branch</th>
-                              <th className="p-4">Schedule</th>
-                              <th className="p-4">Details</th>
-                              <th className="p-4">Status</th>
-                              <th className="p-4 text-center">Actions</th>
+                            <tr className="border-b border-brand-brown/10 bg-brand-beige text-brand-brown uppercase tracking-wider font-bold">
+                              <th className="p-3">Guest</th>
+                              <th className="p-3">Contact</th>
+                              <th className="p-3">Branch</th>
+                              <th className="p-3">Schedule</th>
+                              <th className="p-3">Covers</th>
+                              <th className="p-3">Status</th>
+                              <th className="p-3 text-center">Actions</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-brand-brown/10 text-brand-brown bg-white">
+                          <tbody className="divide-y divide-brand-brown/10 text-brand-brown">
                             {reservations.length === 0 ? (
                               <tr>
-                                <td colSpan="7" className="p-8 text-center text-brand-muted">No reservations booked yet.</td>
+                                <td colSpan="7" className="p-6 text-center text-brand-muted">No reservations booked yet.</td>
                               </tr>
                             ) : (
                               reservations.map((r) => (
-                                <tr key={r._id} className="hover:bg-brand-beige/40">
-                                  <td className="p-4 font-bold text-brand-brown">{r.name}</td>
-                                  <td className="p-4 flex flex-col">
-                                    <span className="font-semibold">{r.phone}</span>
-                                    <span className="text-xs text-brand-brown/70">{r.email || 'No Email'}</span>
+                                <tr key={r._id} className="hover:bg-brand-beige/20">
+                                  <td className="p-3 font-bold">{r.name}</td>
+                                  <td className="p-3">
+                                    <span className="font-semibold block">{r.phone}</span>
+                                    <span className="text-[10px] text-brand-brown/70">{r.email || 'No Email'}</span>
                                   </td>
-                                  <td className="p-4 text-brand-red font-bold">{r.branch}</td>
-                                  <td className="p-4 flex flex-col">
+                                  <td className="p-3 text-brand-red font-bold">{r.branch}</td>
+                                  <td className="p-3">
                                     <span>{r.date}</span>
-                                    <span className="text-xs text-brand-brown/70">{r.time}</span>
+                                    <span className="text-[10px] text-brand-brown/70 block">{r.time}</span>
                                   </td>
-                                  <td className="p-4">
-                                    <span className="bg-brand-beige px-2.5 py-1 rounded text-xs text-brand-brown font-semibold">{r.guests} Guests</span>
-                                    {r.notes && <p className="text-xs text-brand-brown/70 italic mt-1 max-w-[200px] truncate" title={r.notes}>Note: {r.notes}</p>}
+                                  <td className="p-3">
+                                    <span className="bg-brand-beige px-2 py-0.5 rounded font-semibold">{r.guests} Guests</span>
+                                    {r.notes && <p className="text-[10px] text-brand-brown/70 italic mt-0.5 max-w-[150px] truncate" title={r.notes}>{r.notes}</p>}
                                   </td>
-                                  <td className="p-4">
-                                    <span className={`px-2.5 py-1 rounded text-xs font-bold uppercase tracking-wider border ${
+                                  <td className="p-3">
+                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${
                                       r.status === 'Confirmed' ? 'bg-green-50 text-green-700 border-green-200' :
                                       r.status === 'Cancelled' ? 'bg-red-50 text-red-700 border-red-200' :
-                                      'bg-yellow-50 text-yellow-750 border-yellow-200'
+                                      'bg-yellow-50 text-yellow-850 border-yellow-200'
                                     }`}>
                                       {r.status}
                                     </span>
                                   </td>
-                                  <td className="p-4">
-                                    <div className="flex items-center justify-center space-x-2">
+                                  <td className="p-3">
+                                    <div className="flex items-center justify-center space-x-1">
                                       {r.status === 'Pending' && (
                                         <>
                                           <button 
                                             onClick={() => handleUpdateReservationStatus(r._id, 'Confirmed')}
                                             disabled={actionLoading}
-                                            className="p-2 rounded bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 transition-colors"
-                                            title="Confirm Reservation"
+                                            className="p-1.5 rounded bg-green-50 hover:bg-green-100 text-green-700 border border-green-200"
+                                            title="Confirm"
                                           >
-                                            <Check size={16} />
+                                            <Check size={13} />
                                           </button>
                                           <button 
                                             onClick={() => handleUpdateReservationStatus(r._id, 'Cancelled')}
                                             disabled={actionLoading}
-                                            className="p-2 rounded bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-250 transition-colors"
-                                            title="Cancel Reservation"
+                                            className="p-1.5 rounded bg-yellow-50 hover:bg-yellow-100 text-yellow-700 border border-yellow-250"
+                                            title="Cancel"
                                           >
-                                            <X size={16} />
+                                            <X size={13} />
                                           </button>
                                         </>
                                       )}
                                       <button 
                                         onClick={() => handleDeleteReservation(r._id)}
                                         disabled={actionLoading}
-                                        className="p-2 rounded bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 transition-colors"
-                                        title="Delete Record"
+                                        className="p-1.5 rounded bg-red-50 hover:bg-red-100 text-red-700 border border-red-200"
+                                        title="Delete"
                                       >
-                                        <Trash2 size={16} />
+                                        <Trash2 size={13} />
                                       </button>
                                     </div>
                                   </td>
@@ -757,152 +877,349 @@ const Admin = () => {
                       </div>
                     </div>
                   )}
-
-                  {/* TAB 2: MENU CRUD */}
+ 
+                  {/* TAB 2: MENU & CATEGORIES (Category CRUD integrated here) */}
                   {activeTab === 'menu' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 text-brand-brown">
-                      {/* Left: Form */}
-                      <div className="lg:col-span-4 bg-brand-beige border border-brand-brown/10 p-6 rounded-lg glass-card h-fit">
-                        <h2 className="font-playfair text-xl font-bold text-brand-brown mb-2 border-b border-brand-brown/10 pb-2">
-                          {editingMenuId ? 'Edit Culinary Dish' : 'Add New Culinary Dish'}
-                        </h2>
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-brand-brown">
+                      
+                      {/* Left: Forms */}
+                      <div className="lg:col-span-4 flex flex-col space-y-6">
+                        
+                        {/* Menu Item Form */}
+                        <div className="bg-white border border-brand-brown/10 p-5 rounded-lg shadow-xs h-fit">
+                          <h2 className="font-playfair text-lg font-bold text-brand-brown mb-3 border-b border-brand-brown/10 pb-1.5">
+                            {editingMenuId ? 'Edit Dish' : 'Add Dish'}
+                          </h2>
+                          
+                          <form onSubmit={handleMenuSubmit} className="flex flex-col space-y-3.5 text-xs">
+                            <div className="flex flex-col space-y-1">
+                              <label className="font-bold text-brand-gold">Dish Name *</label>
+                              <input
+                                type="text"
+                                required
+                                name="name"
+                                value={menuForm.name}
+                                onChange={handleMenuInputChange}
+                                placeholder="Ulavacharu Chicken Biryani"
+                                className="w-full bg-white border border-brand-brown/20 rounded px-3 py-2 text-sm text-brand-brown focus:outline-none focus:border-brand-gold"
+                              />
+                            </div>
 
-                        {/* Starred constraint reminder */}
-                        <div className={`p-3 rounded mb-4 text-xs font-semibold border leading-relaxed ${
-                          menuItems.filter(item => item.isStarred).length < 3 
-                            ? 'bg-yellow-50 text-yellow-800 border-yellow-250' 
-                            : 'bg-green-50 text-green-700 border-green-200'
-                        }`}>
-                          <span>Signature Curations count: <b>{menuItems.filter(item => item.isStarred).length}</b> starred (Min 3, Max 6 required).</span>
+                            <div className="flex flex-col space-y-1">
+                              <label className="font-bold text-brand-gold">Description</label>
+                              <textarea
+                                name="description"
+                                value={menuForm.description}
+                                onChange={handleMenuInputChange}
+                                rows="2"
+                                placeholder="Horsegram slow-cooked with spices..."
+                                className="w-full bg-white border border-brand-brown/20 rounded px-3 py-2 text-sm text-brand-brown focus:outline-none focus:border-brand-gold"
+                              />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                              <div className="flex flex-col space-y-1">
+                                <label className="font-bold text-brand-gold">Price (₹) *</label>
+                                <input
+                                  type="number"
+                                  required
+                                  name="price"
+                                  value={menuForm.price}
+                                  onChange={handleMenuInputChange}
+                                  placeholder="380"
+                                  className="w-full bg-white border border-brand-brown/20 rounded px-3 py-2 text-sm focus:outline-none focus:border-brand-gold"
+                                />
+                              </div>
+                              <div className="flex flex-col space-y-1">
+                                <label className="font-bold text-brand-gold">Half Price (Optional)</label>
+                                <input
+                                  type="number"
+                                  name="priceHalf"
+                                  value={menuForm.priceHalf}
+                                  onChange={handleMenuInputChange}
+                                  placeholder="210"
+                                  className="w-full bg-white border border-brand-brown/20 rounded px-3 py-2 text-sm focus:outline-none focus:border-brand-gold"
+                                />
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col space-y-1">
+                              <label className="font-bold text-brand-gold">Category *</label>
+                              <select
+                                name="category"
+                                value={menuForm.category}
+                                onChange={handleMenuInputChange}
+                                className="w-full bg-white border border-brand-brown/20 rounded px-3 py-2 text-sm focus:outline-none focus:border-brand-gold"
+                              >
+                                {categories.map(cat => (
+                                  <option key={cat._id || cat.name} value={cat.name}>{cat.name}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div className="flex flex-col space-y-1">
+                              <label className="font-bold text-brand-gold">
+                                {editingMenuId ? 'New Image (Optional)' : 'Dish Image *'}
+                              </label>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={handleMenuFileChange}
+                                className="w-full bg-white border border-brand-brown/20 rounded px-3 py-1.5"
+                              />
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-1.5">
+                              <label className="flex items-center space-x-1.5 cursor-pointer text-brand-brown font-semibold">
+                                <input
+                                  type="checkbox"
+                                  name="isVeg"
+                                  checked={menuForm.isVeg}
+                                  onChange={handleMenuInputChange}
+                                  className="w-4 h-4 accent-brand-gold rounded"
+                                />
+                                <span>Veg</span>
+                              </label>
+                              <label className="flex items-center space-x-1.5 cursor-pointer text-brand-gold font-bold">
+                                <input
+                                  type="checkbox"
+                                  name="isChefSpecial"
+                                  checked={menuForm.isChefSpecial}
+                                  onChange={handleMenuInputChange}
+                                  className="w-4 h-4 accent-brand-gold rounded"
+                                />
+                                <span className="flex items-center gap-0.5"><Sparkles size={11} /> Chef's Choice</span>
+                              </label>
+                              <label className="flex items-center space-x-1.5 cursor-pointer text-brand-red font-bold">
+                                <input
+                                  type="checkbox"
+                                  name="isStarred"
+                                  checked={menuForm.isStarred}
+                                  onChange={handleMenuInputChange}
+                                  className="w-4 h-4 accent-brand-red rounded"
+                                />
+                                <span className="flex items-center gap-0.5"><Star size={11} className="fill-brand-red" /> Starred</span>
+                              </label>
+                            </div>
+
+                            <div className="flex space-x-2 pt-2">
+                              <button
+                                type="submit"
+                                disabled={actionLoading}
+                                className="flex-grow py-2.5 bg-brand-gold text-brand-lightBg font-extrabold rounded uppercase tracking-wider hover:bg-brand-gold/90"
+                              >
+                                {actionLoading ? 'Saving...' : editingMenuId ? 'Save Edit' : 'Add Dish'}
+                              </button>
+                              {editingMenuId && (
+                                <button
+                                  type="button"
+                                  onClick={resetMenuForm}
+                                  className="py-2.5 px-3 border border-brand-brown/30 rounded font-semibold text-brand-brown"
+                                >
+                                  Cancel
+                                </button>
+                              )}
+                            </div>
+                          </form>
+                        </div>
+
+                        {/* Integrated Category CRUD Form & List */}
+                        <div className="bg-white border border-brand-brown/10 p-5 rounded-lg shadow-xs">
+                          <h2 className="font-playfair text-lg font-bold text-brand-brown mb-3 border-b border-brand-brown/10 pb-1.5">
+                            Manage Categories
+                          </h2>
+                          <form onSubmit={handleCategoryCreate} className="flex gap-2 mb-4 text-xs">
+                            <input
+                              type="text"
+                              required
+                              value={categoryInput}
+                              onChange={(e) => setCategoryInput(e.target.value)}
+                              placeholder="New category name"
+                              className="flex-grow bg-white border border-brand-brown/20 rounded px-3 py-2 focus:outline-none"
+                            />
+                            <button
+                              type="submit"
+                              disabled={actionLoading}
+                              className="px-4 py-2 bg-brand-gold text-white font-bold rounded uppercase tracking-wider"
+                            >
+                              Add
+                            </button>
+                          </form>
+                          
+                          <div className="max-h-52 overflow-y-auto border border-brand-brown/10 rounded divide-y divide-brand-brown/10 text-xs">
+                            {categories.length === 0 ? (
+                              <div className="p-3 text-center text-brand-muted">No categories created yet.</div>
+                            ) : (
+                              categories.map((cat) => (
+                                <div key={cat._id} className="flex items-center justify-between p-2.5 hover:bg-brand-beige/20">
+                                  <span className="font-bold text-brand-brown">{cat.name}</span>
+                                  <button
+                                    onClick={() => handleCategoryDelete(cat._id)}
+                                    disabled={actionLoading}
+                                    className="p-1 rounded bg-red-50 text-red-600 border border-red-100 hover:bg-red-100"
+                                    title="Delete Category"
+                                  >
+                                    <Trash2 size={12} />
+                                  </button>
+                                </div>
+                              ))
+                            )}
+                          </div>
                         </div>
                         
-                        <form onSubmit={handleMenuSubmit} className="flex flex-col space-y-4 text-sm">
+                      </div>
+
+                      {/* Right: Menu Items List */}
+                      <div className="lg:col-span-8 flex flex-col space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <h2 className="font-playfair text-xl font-bold text-brand-brown">Current Dishes</h2>
+                            <span className="text-[10px] text-brand-brown/60 uppercase font-bold bg-brand-beige/50 px-2 py-0.5 rounded border border-brand-brown/10">Starred: {menuItems.filter(m=>m.isStarred).length} (Min 3, Max 6)</span>
+                          </div>
+                          <span className="text-xs text-brand-brown/70 font-semibold uppercase bg-white border border-brand-brown/10 px-2.5 py-1 rounded">{menuItems.length} items</span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                          {menuItems.map(item => (
+                            <div key={item._id} className="flex gap-3.5 p-4 rounded-lg bg-white border border-brand-brown/10 relative hover:border-brand-gold/30 transition-colors shadow-xs">
+                              <div className="w-16 h-16 rounded overflow-hidden shrink-0 border border-brand-brown/10">
+                                <img src={getImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" />
+                              </div>
+                              <div className="flex flex-col space-y-0.5 flex-grow pr-20 text-xs">
+                                <div className="flex items-center gap-1 flex-wrap">
+                                  <span className="font-bold text-brand-brown text-sm leading-tight">{item.name}</span>
+                                  {item.isStarred && <Star size={11} className="text-brand-red fill-brand-red shrink-0" />}
+                                  {item.isChefSpecial && <Sparkles size={11} className="text-brand-gold shrink-0" />}
+                                  <span className={`w-2 h-2 rounded-full shrink-0 border border-white ${item.isVeg ? 'bg-green-600' : 'bg-red-600'}`} />
+                                </div>
+                                <span className="text-brand-red font-bold text-sm">₹{item.price} {item.priceHalf && <span className="text-[10px] text-brand-brown/50 font-normal">(Half: ₹{item.priceHalf})</span>}</span>
+                                <span className="text-[10px] text-brand-brown/60 font-semibold uppercase tracking-wider">Category: {item.category}</span>
+                                <p className="text-[10px] text-brand-brown/70 italic line-clamp-1 mt-0.5">{item.description}</p>
+                              </div>
+
+                              {/* Action buttons */}
+                              <div className="absolute top-3.5 right-3.5 flex items-center space-x-1">
+                                <button 
+                                  onClick={() => handleToggleMenuStar(item)}
+                                  className={`p-1.5 rounded border transition-colors ${
+                                    item.isStarred 
+                                      ? 'bg-brand-gold border-brand-gold text-brand-lightBg' 
+                                      : 'bg-white border-brand-brown/15 hover:border-brand-gold text-brand-brown'
+                                  }`}
+                                  title="Toggle Star"
+                                >
+                                  <Star size={12} className={item.isStarred ? "fill-current" : ""} />
+                                </button>
+                                <button 
+                                  onClick={() => handleEditMenuSelect(item)}
+                                  className="p-1.5 rounded bg-white border border-brand-brown/15 hover:border-brand-gold text-brand-brown"
+                                  title="Edit"
+                                >
+                                  <Edit size={12} />
+                                </button>
+                                <button 
+                                  onClick={() => handleDeleteMenuItem(item._id)}
+                                  className="p-1.5 rounded bg-white border border-brand-brown/15 hover:border-brand-red text-red-650"
+                                  title="Delete"
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      
+                    </div>
+                  )}
+
+                  {/* TAB 3: TESTIMONIALS (Full CRUD added) */}
+                  {activeTab === 'testimonials' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-brand-brown">
+                      
+                      {/* Left: Testimonial Edit/Add Form */}
+                      <div className="lg:col-span-4 bg-white border border-brand-brown/10 p-5 rounded-lg shadow-xs h-fit">
+                        <h2 className="font-playfair text-lg font-bold text-brand-brown mb-3 border-b border-brand-brown/10 pb-1.5">
+                          {editingTestimonialId ? 'Edit Review' : 'Add Guest Review'}
+                        </h2>
+                        
+                        <form onSubmit={handleTestimonialSubmit} className="flex flex-col space-y-3.5 text-xs">
                           <div className="flex flex-col space-y-1">
-                            <label className="text-xs uppercase font-bold text-brand-gold">Dish Name *</label>
+                            <label className="font-bold text-brand-gold">Guest Name *</label>
                             <input
                               type="text"
                               required
                               name="name"
-                              value={menuForm.name}
-                              onChange={handleMenuInputChange}
-                              placeholder="e.g. Ulavacharu Chicken Biryani"
-                              className="w-full bg-white border border-brand-brown/20 rounded px-4 py-2.5 text-sm text-brand-brown focus:outline-none focus:border-brand-gold transition-colors shadow-sm"
+                              value={testimonialForm.name}
+                              onChange={handleTestimonialInputChange}
+                              placeholder="e.g. K. Viswanath"
+                              className="w-full bg-white border border-brand-brown/20 rounded px-3 py-2 text-sm text-brand-brown focus:outline-none"
                             />
                           </div>
 
                           <div className="flex flex-col space-y-1">
-                            <label className="text-xs uppercase font-bold text-brand-gold">Description</label>
-                            <textarea
-                              name="description"
-                              value={menuForm.description}
-                              onChange={handleMenuInputChange}
-                              rows="3"
-                              placeholder="Enter spices or story parameters..."
-                              className="w-full bg-white border border-brand-brown/20 rounded px-4 py-2.5 text-sm text-brand-brown focus:outline-none focus:border-brand-gold transition-colors shadow-sm"
+                            <label className="font-bold text-brand-gold">Designation / Role *</label>
+                            <input
+                              type="text"
+                              required
+                              name="designation"
+                              value={testimonialForm.designation}
+                              onChange={handleTestimonialInputChange}
+                              placeholder="e.g. Local Food Critic"
+                              className="w-full bg-white border border-brand-brown/20 rounded px-3 py-2 text-sm text-brand-brown focus:outline-none"
                             />
                           </div>
 
-                          <div className="grid grid-cols-2 gap-3">
-                            <div className="flex flex-col space-y-1">
-                              <label className="text-xs uppercase font-bold text-brand-gold">Full Price (₹) *</label>
-                              <input
-                                type="number"
-                                required
-                                name="price"
-                                value={menuForm.price}
-                                onChange={handleMenuInputChange}
-                                placeholder="380"
-                                className="w-full bg-white border border-brand-brown/20 rounded px-4 py-2.5 text-sm text-brand-brown focus:outline-none focus:border-brand-gold transition-colors shadow-sm"
-                              />
-                            </div>
-                            <div className="flex flex-col space-y-1">
-                              <label className="text-xs uppercase font-bold text-brand-gold">Half Price (Optional)</label>
-                              <input
-                                type="number"
-                                name="priceHalf"
-                                value={menuForm.priceHalf}
-                                onChange={handleMenuInputChange}
-                                placeholder="e.g. 210"
-                                className="w-full bg-white border border-brand-brown/20 rounded px-4 py-2.5 text-sm text-brand-brown focus:outline-none focus:border-brand-gold transition-colors shadow-sm"
-                              />
-                            </div>
-                          </div>
-
                           <div className="flex flex-col space-y-1">
-                            <label className="text-xs uppercase font-bold text-brand-gold">Category *</label>
+                            <label className="font-bold text-brand-gold">Rating (1 to 5) *</label>
                             <select
-                              name="category"
-                              value={menuForm.category}
-                              onChange={handleMenuInputChange}
-                              className="w-full bg-white border border-brand-brown/20 rounded px-4 py-2.5 text-sm text-brand-brown focus:outline-none focus:border-brand-gold transition-colors shadow-sm"
+                              name="rating"
+                              value={testimonialForm.rating}
+                              onChange={handleTestimonialInputChange}
+                              className="w-full bg-white border border-brand-brown/20 rounded px-3 py-2 text-sm focus:outline-none"
                             >
-                              {categories.map(cat => (
-                                <option key={cat._id || cat.name} value={cat.name}>{cat.name}</option>
+                              {[5, 4, 3, 2, 1].map(num => (
+                                <option key={num} value={num}>{num} Star{num > 1 ? 's' : ''}</option>
                               ))}
                             </select>
                           </div>
 
-                          {/* Image upload */}
                           <div className="flex flex-col space-y-1">
-                            <label className="text-xs uppercase font-bold text-brand-gold">
-                              {editingMenuId ? 'Upload New Image (Optional)' : 'Upload Dish Image *'}
-                            </label>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={handleMenuFileChange}
-                              className="w-full bg-white border border-brand-brown/20 rounded px-4 py-2 text-sm text-brand-brown focus:outline-none focus:border-brand-gold transition-colors"
+                            <label className="font-bold text-brand-gold">Review Comment *</label>
+                            <textarea
+                              required
+                              name="comment"
+                              value={testimonialForm.comment}
+                              onChange={handleTestimonialInputChange}
+                              rows="3"
+                              placeholder="Write the diner's quote..."
+                              className="w-full bg-white border border-brand-brown/20 rounded px-3 py-2 text-sm focus:outline-none"
                             />
                           </div>
 
-                          {/* Checkbox fields */}
-                          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 pt-2">
-                            <label className="flex items-center space-x-2 text-sm cursor-pointer select-none text-brand-brown">
-                              <input
-                                type="checkbox"
-                                name="isVeg"
-                                checked={menuForm.isVeg}
-                                onChange={handleMenuInputChange}
-                                className="w-5 h-5 accent-brand-gold rounded border-brand-brown/20"
-                              />
-                              <span className="font-medium">Vegetarian</span>
-                            </label>
-                            <label className="flex items-center space-x-2 text-sm cursor-pointer select-none text-brand-brown">
-                              <input
-                                type="checkbox"
-                                name="isChefSpecial"
-                                checked={menuForm.isChefSpecial}
-                                onChange={handleMenuInputChange}
-                                className="w-5 h-5 accent-brand-gold rounded border-brand-brown/20"
-                              />
-                              <span className="flex items-center gap-1 text-brand-gold font-bold"><Sparkles size={14} /> Chef Special</span>
-                            </label>
-                            <label className="flex items-center space-x-2 text-sm cursor-pointer select-none text-brand-brown">
-                              <input
-                                type="checkbox"
-                                name="isStarred"
-                                checked={menuForm.isStarred}
-                                onChange={handleMenuInputChange}
-                                className="w-5 h-5 accent-brand-gold rounded border-brand-brown/20"
-                              />
-                              <span className="flex items-center gap-1 text-brand-red font-bold"><Star size={14} className="fill-brand-red" /> Starred (Home)</span>
-                            </label>
-                          </div>
+                          <label className="flex items-center space-x-2 cursor-pointer font-semibold text-brand-brown">
+                            <input
+                              type="checkbox"
+                              name="approved"
+                              checked={testimonialForm.approved}
+                              onChange={handleTestimonialInputChange}
+                              className="w-4 h-4 accent-brand-gold rounded"
+                            />
+                            <span>Approved (Display on Homepage)</span>
+                          </label>
 
-                          {/* Action Buttons */}
                           <div className="flex space-x-2 pt-2">
-                             <button
+                            <button
                               type="submit"
                               disabled={actionLoading}
-                              className="flex-grow py-3 bg-brand-gold hover:bg-brand-gold/90 text-brand-lightBg font-bold rounded uppercase tracking-wider text-xs shadow-md transition-colors"
+                              className="flex-grow py-2.5 bg-brand-gold text-brand-lightBg font-extrabold rounded uppercase tracking-wider hover:bg-brand-gold/90"
                             >
-                              {actionLoading ? 'Saving...' : editingMenuId ? 'Update Item' : 'Create Item'}
+                              {actionLoading ? 'Saving...' : editingTestimonialId ? 'Save Changes' : 'Create Testimonial'}
                             </button>
-                            {editingMenuId && (
+                            {editingTestimonialId && (
                               <button
                                 type="button"
-                                onClick={resetMenuForm}
-                                className="py-3 px-5 border border-brand-brown/30 hover:border-brand-brown/50 rounded text-xs uppercase tracking-wider font-semibold text-brand-brown transition-colors"
+                                onClick={resetTestimonialForm}
+                                className="py-2.5 px-3 border border-brand-brown/30 rounded font-semibold text-brand-brown"
                               >
                                 Cancel
                               </button>
@@ -911,236 +1228,180 @@ const Admin = () => {
                         </form>
                       </div>
 
-                      {/* Right: List */}
+                      {/* Right: Testimonials Review List */}
                       <div className="lg:col-span-8 flex flex-col space-y-4">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <h2 className="font-playfair text-2xl font-bold text-brand-brown">Current Menu List</h2>
-                            <span className="font-telugu text-brand-muted text-lg tracking-wide ml-2">ప్రస్తుత మెనూ</span>
-                          </div>
-                          <span className="text-xs text-brand-brown/70 font-semibold uppercase bg-brand-beige px-3 py-1 rounded-full">{menuItems.length} items</span>
+                          <h2 className="font-playfair text-xl font-bold text-brand-brown">Diners Review List</h2>
+                          <span className="text-xs text-brand-brown/70 font-semibold uppercase bg-white border border-brand-brown/10 px-2.5 py-1 rounded">{testimonials.length} reviews</span>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {menuItems.map(item => (
-                            <div key={item._id} className="flex gap-4 p-5 rounded-lg bg-white border border-brand-brown/10 relative glass-card hover:border-brand-gold/40 transition-colors shadow-sm">
-                              {/* Thumbnail */}
-                              <div className="w-20 h-20 rounded overflow-hidden shrink-0 bg-brand-beige border border-brand-brown/10">
-                                <img src={getImageUrl(item.image)} alt={item.name} className="w-full h-full object-cover" />
-                              </div>
-                              <div className="flex flex-col space-y-1 flex-grow pr-16 text-sm text-brand-brown">
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                  <span className="font-bold text-brand-brown text-base leading-snug">{item.name}</span>
-                                  {item.isStarred && <Star size={12} className="text-brand-red fill-brand-red shrink-0" title="Starred (Home Signature)" />}
-                                  {item.isChefSpecial && <Sparkles size={12} className="text-brand-gold shrink-0" title="Chef Special" />}
-                                  <span className={`w-2.5 h-2.5 rounded-full shrink-0 border border-white ${item.isVeg ? 'bg-green-600' : 'bg-red-600'}`} title={item.isVeg ? 'Veg' : 'Non-Veg'} />
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {testimonials.map(t => (
+                            <div key={t._id} className="p-4 rounded-lg bg-white border border-brand-brown/10 flex flex-col justify-between space-y-3 hover:border-brand-gold/30 transition-colors shadow-xs">
+                              <div className="flex flex-col space-y-1.5 text-xs">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="font-bold text-brand-brown text-sm">{t.name}</span>
+                                  <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border ${
+                                    t.approved ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-800 border-yellow-250'
+                                  }`}>
+                                    {t.approved ? 'Approved' : 'Pending'}
+                                  </span>
                                 </div>
-                                <span className="text-brand-red font-bold text-base">₹{item.price} {item.priceHalf && <span className="text-xs text-brand-brown/50 font-normal">(Half: ₹{item.priceHalf})</span>}</span>
-                                <span className="text-xs text-brand-brown/60 uppercase tracking-wider font-semibold">Category: {item.category}</span>
+                                <span className="text-[10px] text-brand-brown/60 uppercase font-semibold tracking-wider leading-none">{t.designation || 'Happy Diner'}</span>
+                                <div className="flex text-brand-gold space-x-0.5">
+                                  {Array.from({ length: t.rating || 5 }).map((_, i) => <Star key={i} size={11} fill="currentColor" />)}
+                                </div>
+                                <p className="text-brand-brown/90 italic font-light pt-1 leading-relaxed">"{t.comment}"</p>
                               </div>
 
-                              {/* Operations */}
-                              <div className="absolute top-4 right-4 flex items-center space-x-1.5">
+                              <div className="pt-2 border-t border-brand-brown/10 flex items-center justify-end space-x-1 text-xs">
+                                {!t.approved && (
+                                  <button 
+                                    onClick={() => handleApproveTestimonial(t._id)}
+                                    disabled={actionLoading}
+                                    className="p-1.5 rounded bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 font-bold"
+                                    title="Approve"
+                                  >
+                                    <Check size={12} />
+                                  </button>
+                                )}
                                 <button 
-                                  onClick={() => handleToggleMenuStar(item)}
-                                  className={`p-2 rounded border transition-colors ${
-                                    item.isStarred 
-                                      ? 'bg-brand-gold border-brand-gold text-brand-lightBg hover:bg-brand-gold/80' 
-                                      : 'bg-brand-beige border-brand-brown/10 hover:border-brand-gold text-brand-brown'
-                                  }`}
-                                  title={item.isStarred ? "Unstar (Home Signature)" : "Star for Home Signature"}
+                                  onClick={() => handleEditTestimonialSelect(t)}
+                                  className="p-1.5 rounded bg-white hover:bg-brand-beige/40 text-brand-brown border border-brand-brown/15 font-bold"
+                                  title="Edit"
                                 >
-                                  <Star size={14} className={item.isStarred ? "fill-current" : ""} />
+                                  <Edit size={12} />
                                 </button>
                                 <button 
-                                  onClick={() => handleEditMenuSelect(item)}
-                                  className="p-2 rounded bg-brand-beige border border-brand-brown/10 hover:border-brand-gold text-brand-brown transition-colors"
-                                  title="Edit Item"
+                                  onClick={() => handleDeleteTestimonial(t._id)}
+                                  disabled={actionLoading}
+                                  className="p-1.5 rounded bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 font-bold"
+                                  title="Delete"
                                 >
-                                  <Edit size={14} />
-                                </button>
-                                <button 
-                                  onClick={() => handleDeleteMenuItem(item._id)}
-                                  className="p-2 rounded bg-brand-beige border border-brand-brown/10 hover:border-brand-red text-brand-red transition-colors"
-                                  title="Delete Item"
-                                >
-                                  <Trash2 size={14} />
+                                  <Trash2 size={12} />
                                 </button>
                               </div>
                             </div>
                           ))}
                         </div>
                       </div>
-                    </div>
-                  )}
 
-                  {/* TAB 3: TESTIMONIALS */}
-                  {activeTab === 'testimonials' && (
-                    <div className="flex flex-col space-y-6">
-                      <div className="flex items-center gap-2">
-                        <h2 className="font-playfair text-2xl font-bold text-brand-brown">Guest Review Moderation</h2>
-                        <span className="font-telugu text-brand-muted text-lg tracking-wide ml-2">అతిథి సమీక్షలు</span>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {testimonials.map(t => (
-                          <div key={t._id} className="p-6 rounded-lg bg-white border border-brand-brown/10 glass-card flex flex-col justify-between space-y-4 hover:border-brand-gold/40 transition-all shadow-sm">
-                            <div className="flex flex-col space-y-2 text-sm md:text-base text-brand-brown">
-                              <div className="flex items-center justify-between">
-                                <span className="font-bold text-brand-brown text-base md:text-lg">{t.name}</span>
-                                <span className={`px-2.5 py-1 rounded text-[10px] font-bold uppercase tracking-wider border ${
-                                  t.approved ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-755 border-yellow-250'
-                                }`}>
-                                  {t.approved ? 'Approved' : 'Pending Review'}
-                                </span>
-                              </div>
-                              <span className="text-xs text-brand-brown/60 uppercase tracking-widest">{t.designation || 'Happy Diner'}</span>
-                              <div className="flex text-brand-gold space-x-0.5">
-                                {Array.from({ length: t.rating }).map((_, i) => <Star key={i} size={14} fill="currentColor" />)}
-                              </div>
-                              <p className="text-brand-brown/90 italic font-light pt-2 leading-relaxed text-sm md:text-base">"{t.comment}"</p>
-                            </div>
-
-                            <div className="pt-4 border-t border-brand-brown/10 flex items-center justify-end space-x-2">
-                              {!t.approved && (
-                                <button 
-                                  onClick={() => handleApproveTestimonial(t._id)}
-                                  disabled={actionLoading}
-                                  className="px-4 py-2 rounded bg-green-50 hover:bg-green-100 text-green-700 text-xs font-bold flex items-center gap-1 border border-green-200 transition-colors"
-                                >
-                                  <Check size={14} />
-                                  <span>Approve Review</span>
-                                </button>
-                              )}
-                              <button 
-                                onClick={() => handleDeleteTestimonial(t._id)}
-                                disabled={actionLoading}
-                                className="px-4 py-2 rounded bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold flex items-center gap-1 border border-red-200 transition-colors"
-                              >
-                                <Trash2 size={14} />
-                                <span>Delete</span>
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
                     </div>
                   )}
 
                   {/* TAB 4: GALLERY */}
                   {activeTab === 'gallery' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 text-brand-brown">
-                      {/* Left Form */}
-                      <div className="lg:col-span-4 bg-brand-beige border border-brand-brown/10 p-6 rounded-lg glass-card h-fit">
-                        <h2 className="font-playfair text-xl font-bold text-brand-brown mb-4 border-b border-brand-brown/10 pb-2">Upload Gallery Image</h2>
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-brand-brown">
+                      
+                      {/* Left: Upload Form */}
+                      <div className="lg:col-span-4 bg-white border border-brand-brown/10 p-5 rounded-lg shadow-xs h-fit">
+                        <h2 className="font-playfair text-lg font-bold text-brand-brown mb-3 border-b border-brand-brown/10 pb-1.5">Upload Gallery</h2>
                         
-                        <form onSubmit={handleGallerySubmit} className="flex flex-col space-y-4 text-sm">
+                        <form onSubmit={handleGallerySubmit} className="flex flex-col space-y-3.5 text-xs">
                           <div className="flex flex-col space-y-1">
-                            <label className="text-xs uppercase font-bold text-brand-gold">Image Title *</label>
+                            <label className="font-bold text-brand-gold">Image Title *</label>
                             <input
                               type="text"
                               required
                               value={galleryForm.title}
                               onChange={(e) => setGalleryForm({ ...galleryForm, title: e.target.value })}
-                              placeholder="e.g. Classic NTR poster framed"
-                              className="w-full bg-white border border-brand-brown/20 rounded px-4 py-2.5 text-sm text-brand-brown focus:outline-none focus:border-brand-gold transition-colors shadow-sm"
+                              placeholder="Classic NTR poster framed"
+                              className="w-full bg-white border border-brand-brown/20 rounded px-3 py-2 text-sm text-brand-brown focus:outline-none"
                             />
                           </div>
 
                           <div className="flex flex-col space-y-1">
-                            <label className="text-xs uppercase font-bold text-brand-gold">Category *</label>
+                            <label className="font-bold text-brand-gold">Category *</label>
                             <select
                               value={galleryForm.category}
                               onChange={(e) => setGalleryForm({ ...galleryForm, category: e.target.value })}
-                              className="w-full bg-white border border-brand-brown/20 rounded px-4 py-2.5 text-sm text-brand-brown focus:outline-none focus:border-brand-gold transition-colors shadow-sm"
+                              className="w-full bg-white border border-brand-brown/20 rounded px-3 py-2 text-sm focus:outline-none"
                             >
                               {['Food', 'Interiors', 'Events', 'Tollywood Wall'].map(cat => (
-                                <option key={cat} value={cat}>{cat}</option>
+                                  <option key={cat} value={cat}>{cat}</option>
                               ))}
                             </select>
                           </div>
 
                           <div className="flex flex-col space-y-1">
-                            <label className="text-xs uppercase font-bold text-brand-gold">Image File *</label>
+                            <label className="font-bold text-brand-gold">Image File *</label>
                             <input
                               type="file"
                               required
                               accept="image/*"
                               onChange={(e) => setGalleryForm({ ...galleryForm, imageFile: e.target.files[0] })}
-                              className="w-full bg-white border border-brand-brown/20 rounded px-4 py-2 text-sm text-brand-brown focus:outline-none focus:border-brand-gold transition-colors"
+                              className="w-full bg-white border border-brand-brown/20 rounded px-3 py-1.5"
                             />
                           </div>
+
+                          <label className="flex items-center space-x-2 cursor-pointer font-semibold text-brand-brown">
+                            <input
+                              type="checkbox"
+                              checked={galleryForm.isStarred}
+                              onChange={(e) => setGalleryForm({ ...galleryForm, isStarred: e.target.checked })}
+                              className="w-4 h-4 accent-brand-gold rounded"
+                            />
+                            <span>Star/Highlight in Section</span>
+                          </label>
 
                           <button 
                             type="submit"
                             disabled={actionLoading}
-                            className="w-full py-3 bg-brand-gold hover:bg-brand-gold/90 text-brand-lightBg font-bold rounded uppercase tracking-wider text-xs shadow-md transition-colors"
+                            className="w-full py-2.5 bg-brand-gold text-brand-lightBg font-extrabold rounded uppercase tracking-wider"
                           >
-                            {actionLoading ? 'Uploading...' : 'Upload Frame'}
+                            {actionLoading ? 'Uploading...' : 'Upload Media'}
                           </button>
                         </form>
                       </div>
 
-                      {/* Right List */}
+                      {/* Right: Gallery Media Grid */}
                       <div className="lg:col-span-8 flex flex-col space-y-4">
-                        <div className="flex items-center gap-2">
-                          <h2 className="font-playfair text-2xl font-bold text-brand-brown">Current Gallery Media</h2>
-                          <span className="font-telugu text-brand-muted text-lg tracking-wide ml-2">గ్యాలరీ చిత్రాలు</span>
+                        <div className="flex items-center gap-2 justify-between">
+                          <h2 className="font-playfair text-xl font-bold text-brand-brown">Gallery Media</h2>
+                          {(() => {
+                            const starredWallCount = galleryItems.filter(g => g.isStarred && g.category === 'Tollywood Wall').length;
+                            return (
+                              <span className={`text-[10px] uppercase font-bold border px-2.5 py-1 rounded ${
+                                starredWallCount === 5 ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-800 border-yellow-250'
+                              }`}>
+                                Tollywood Starred: {starredWallCount} / 5
+                              </span>
+                            );
+                          })()}
                         </div>
 
-                        {/* Starred count check banner */}
-                        {(() => {
-                          const starredTollywoodCount = galleryItems.filter(g => g.isStarred && g.category === 'Tollywood Wall').length;
-                          return (
-                            <div className={`p-3.5 rounded-lg border text-sm font-semibold flex items-center gap-2.5 transition-all shadow-sm ${
-                              starredTollywoodCount === 5 
-                                ? 'bg-green-50 text-green-700 border-green-200' 
-                                : 'bg-yellow-50 text-yellow-800 border-yellow-250 animate-pulse'
-                            }`}>
-                              <AlertCircle size={18} className="shrink-0 text-brand-gold" />
-                              <span>
-                                Tollywood Wall Starred Count: <b>{starredTollywoodCount}</b> of <b>5</b> starred.
-                                {starredTollywoodCount !== 5 && ' (Exactly 5 starred images are required for the Tollywood Wall to display on the homepage!)'}
-                              </span>
-                            </div>
-                          );
-                        })()}
-
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
                           {galleryItems.map(g => (
-                            <div key={g._id} className="relative aspect-video rounded overflow-hidden group border border-brand-brown/10 bg-white shadow-sm hover:shadow-md transition-shadow">
+                            <div key={g._id} className="relative aspect-video rounded-lg overflow-hidden group border border-brand-brown/10 bg-white shadow-xs">
                               <img src={getImageUrl(g.image)} alt={g.title} className="w-full h-full object-cover" />
                               
-                              {/* Star indicator badge (visible without hover) */}
                               {g.isStarred && (
-                                <div className="absolute top-2 left-2 z-20 bg-brand-gold text-white px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 shadow">
-                                  <Star size={10} className="fill-current" />
+                                <div className="absolute top-2 left-2 z-20 bg-brand-gold text-white px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider flex items-center gap-0.5 shadow">
+                                  <Star size={9} className="fill-current" />
                                   <span>Starred</span>
                                 </div>
                               )}
 
-                              <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-3.5 z-10 text-brand-lightBg">
-                                <span className="text-xs uppercase tracking-wider text-brand-gold font-bold">{g.category}</span>
-                                <div className="flex items-center justify-between gap-2">
-                                  <span className="text-xs text-brand-lightBg truncate max-w-[100px]" title={g.title}>{g.title}</span>
-                                  <div className="flex items-center gap-1">
+                              <div className="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-between p-3 z-10 text-brand-lightBg text-[10px]">
+                                <span className="uppercase tracking-wider text-brand-gold font-bold">{g.category}</span>
+                                <div className="flex items-center justify-between gap-1">
+                                  <span className="truncate max-w-[80px]" title={g.title}>{g.title}</span>
+                                  <div className="flex items-center space-x-1 shrink-0">
                                     <button 
                                       onClick={() => handleToggleGalleryStar(g)}
                                       disabled={actionLoading}
-                                      className={`p-1.5 rounded transition-colors ${
-                                        g.isStarred 
-                                          ? 'bg-brand-gold text-brand-lightBg hover:bg-brand-gold/80' 
-                                          : 'bg-white/20 text-white hover:bg-white/40'
+                                      className={`p-1 rounded ${
+                                        g.isStarred ? 'bg-brand-gold text-brand-lightBg' : 'bg-white/20 text-white hover:bg-white/40'
                                       }`}
-                                      title={g.isStarred ? "Unstar Image" : "Star Image"}
                                     >
-                                      <Star size={12} className={g.isStarred ? "fill-current" : ""} />
+                                      <Star size={10} className={g.isStarred ? "fill-current" : ""} />
                                     </button>
                                     <button 
                                       onClick={() => handleDeleteGalleryItem(g._id)}
                                       disabled={actionLoading}
-                                      className="p-1.5 rounded bg-red-900 hover:bg-red-805 text-brand-lightBg transition-colors"
-                                      title="Delete Image"
+                                      className="p-1 rounded bg-red-950 hover:bg-red-900 text-brand-lightBg"
                                     >
-                                      <Trash2 size={12} />
+                                      <Trash2 size={10} />
                                     </button>
                                   </div>
                                 </div>
@@ -1149,178 +1410,99 @@ const Admin = () => {
                           ))}
                         </div>
                       </div>
+
                     </div>
                   )}
 
-                  {/* TAB 3 (Inserted): CATEGORIES CRUD */}
-                  {activeTab === 'categories' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 text-brand-brown">
-                      {/* Left: Add Category Form */}
-                      <div className="lg:col-span-4 bg-brand-beige border border-brand-brown/10 p-6 rounded-lg glass-card h-fit">
-                        <h2 className="font-playfair text-xl font-bold text-brand-brown mb-4 border-b border-brand-brown/10 pb-2">
-                          Add New Category
-                        </h2>
-                        <form onSubmit={handleCategoryCreate} className="flex flex-col space-y-4 text-sm">
-                          <div className="flex flex-col space-y-1">
-                            <label className="text-xs uppercase font-bold text-brand-gold">Category Name *</label>
-                            <input
-                              type="text"
-                              required
-                              value={categoryInput}
-                              onChange={(e) => setCategoryInput(e.target.value)}
-                              placeholder="e.g. Traditional Soups"
-                              className="w-full bg-white border border-brand-brown/20 rounded px-4 py-2.5 text-sm text-brand-brown focus:outline-none focus:border-brand-gold transition-colors shadow-sm"
-                            />
-                          </div>
-                          <button
-                            type="submit"
-                            disabled={actionLoading}
-                            className="w-full py-3 bg-brand-gold hover:bg-brand-gold/90 text-brand-lightBg font-bold rounded uppercase tracking-wider text-xs shadow-md transition-colors"
-                          >
-                            {actionLoading ? 'Creating...' : 'Create Category'}
-                          </button>
-                        </form>
-                      </div>
-
-                      {/* Right: Category List */}
-                      <div className="lg:col-span-8 flex flex-col space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <h2 className="font-playfair text-2xl font-bold text-brand-brown">Categories</h2>
-                            <span className="font-telugu text-brand-muted text-lg tracking-wide ml-2">వర్గాలు</span>
-                          </div>
-                          <span className="text-xs text-brand-brown/70 font-semibold uppercase bg-brand-beige px-3 py-1 rounded-full">{categories.length} categories</span>
-                        </div>
-
-                        <div className="overflow-x-auto border border-brand-brown/10 rounded-lg glass-card shadow-sm">
-                          <table className="w-full text-left border-collapse text-sm">
-                            <thead>
-                              <tr className="border-b border-brand-brown/10 bg-brand-beige text-brand-brown uppercase tracking-wider text-xs font-bold">
-                                <th className="p-4">Name</th>
-                                <th className="p-4">Created Date</th>
-                                <th className="p-4 text-center">Actions</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-brand-brown/10 text-brand-brown bg-white">
-                              {categories.length === 0 ? (
-                                <tr>
-                                  <td colSpan="3" className="p-8 text-center text-brand-muted">No categories created yet.</td>
-                                </tr>
-                              ) : (
-                                categories.map((cat) => (
-                                  <tr key={cat._id} className="hover:bg-brand-beige/40">
-                                    <td className="p-4 font-bold text-brand-brown">{cat.name}</td>
-                                    <td className="p-4">{new Date(cat.createdAt || Date.now()).toLocaleDateString()}</td>
-                                    <td className="p-4">
-                                      <div className="flex items-center justify-center">
-                                        <button
-                                          onClick={() => handleCategoryDelete(cat._id)}
-                                          disabled={actionLoading}
-                                          className="p-2 rounded bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 transition-colors"
-                                          title="Delete Category"
-                                        >
-                                          <Trash2 size={16} />
-                                        </button>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                ))
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* TAB 4 (Inserted): PAGE IMAGES CUSTOMIZER */}
+                  {/* TAB 5: PAGES SETTINGS (Restructured with dropdown and keys exclusion) */}
                   {activeTab === 'pageImages' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 text-brand-brown">
-                      {/* Left: Upload/Change Page Image Form */}
-                      <div className="lg:col-span-4 bg-brand-beige border border-brand-brown/10 p-6 rounded-lg glass-card h-fit">
-                        <h2 className="font-playfair text-xl font-bold text-brand-brown mb-4 border-b border-brand-brown/10 pb-2">
-                          Customize Website Images
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-brand-brown">
+                      
+                      {/* Left: Customizer Form */}
+                      <div className="lg:col-span-4 bg-white border border-brand-brown/10 p-5 rounded-lg shadow-xs h-fit">
+                        <h2 className="font-playfair text-lg font-bold text-brand-brown mb-3 border-b border-brand-brown/10 pb-1.5">
+                          Customize Images
                         </h2>
-                        <form onSubmit={handlePageImageSubmit} className="flex flex-col space-y-4 text-sm">
+                        
+                        <form onSubmit={handlePageImageSubmit} className="flex flex-col space-y-3.5 text-xs">
+                          {/* Choose Page */}
                           <div className="flex flex-col space-y-1">
-                            <label className="text-xs uppercase font-bold text-brand-gold">Select Setting / Image Key *</label>
+                            <label className="font-bold text-brand-gold">Select Page Context</label>
+                            <select
+                              value={pageFilter}
+                              onChange={(e) => {
+                                setPageFilter(e.target.value);
+                                setSelectedPageImageKey('');
+                              }}
+                              className="w-full bg-white border border-brand-brown/20 rounded px-3 py-2 text-sm text-brand-brown focus:outline-none focus:border-brand-gold"
+                            >
+                              <option value="home">Home Page</option>
+                              <option value="about">About Page</option>
+                            </select>
+                          </div>
+
+                          {/* Choose key mapping */}
+                          <div className="flex flex-col space-y-1">
+                            <label className="font-bold text-brand-gold">Select Image Location *</label>
                             <select
                               required
                               value={selectedPageImageKey}
                               onChange={(e) => setSelectedPageImageKey(e.target.value)}
-                              className="w-full bg-white border border-brand-brown/20 rounded px-4 py-2.5 text-sm text-brand-brown focus:outline-none focus:border-brand-gold transition-colors shadow-sm"
+                              className="w-full bg-white border border-brand-brown/20 rounded px-3 py-2 text-sm text-brand-brown focus:outline-none focus:border-brand-gold"
                             >
                               <option value="">-- Choose Key to Customize --</option>
-                              <optgroup label="Homepage Settings">
-                                <option value="home_hero_bg">Home Hero Background</option>
-                                <option value="home_hero_biryani">Home Hero Biryani Item</option>
-                                <option value="home_hero_thali">Home Hero Thali Item</option>
-                                <option value="home_hero_idly">Home Hero Idly Item</option>
-                                <option value="home_thali">Home Thali Experience Section</option>
-                                <option value="home_sweets">Home Sweets Experience Section</option>
-                                <option value="home_banquet">Home Banquet Section Image</option>
-                              </optgroup>
-                              <optgroup label="About Page Settings">
-                                <option value="about_header_bg">About Header Background</option>
-                                <option value="about_founding">About Founding Legacy Section</option>
-                                <option value="about_philosophy">About Culinary Philosophy Section</option>
-                                <option value="about_banquet">About Banquet Hall Section Details</option>
-                              </optgroup>
+                              {(pageFilter === 'home' ? homePageOptions : aboutPageOptions).map(opt => (
+                                <option key={opt.key} value={opt.key}>{opt.label}</option>
+                              ))}
                             </select>
                           </div>
 
                           <div className="flex flex-col space-y-1">
-                            <label className="text-xs uppercase font-bold text-brand-gold">Upload Custom Image *</label>
+                            <label className="font-bold text-brand-gold">Upload Custom Image *</label>
                             <input
                               type="file"
                               required
                               accept="image/*"
                               onChange={(e) => setPageImageFile(e.target.files[0])}
-                              className="w-full bg-white border border-brand-brown/20 rounded px-4 py-2 text-sm text-brand-brown focus:outline-none focus:border-brand-gold transition-colors"
+                              className="w-full bg-white border border-brand-brown/20 rounded px-3 py-1.5"
                             />
                           </div>
 
                           <button
                             type="submit"
                             disabled={actionLoading}
-                            className="w-full py-3 bg-brand-gold hover:bg-brand-gold/90 text-brand-lightBg font-bold rounded uppercase tracking-wider text-xs shadow-md transition-colors"
+                            className="w-full py-2.5 bg-brand-gold text-brand-lightBg font-extrabold rounded uppercase tracking-wider"
                           >
-                            {actionLoading ? 'Uploading...' : 'Save Website Image'}
+                            {actionLoading ? 'Uploading...' : 'Save Custom Image'}
                           </button>
                         </form>
                       </div>
 
-                      {/* Right: Current Images Grid */}
+                      {/* Right: Customized Grid */}
                       <div className="lg:col-span-8 flex flex-col space-y-4">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <h2 className="font-playfair text-2xl font-bold text-brand-brown">Custom Page Images</h2>
-                            <span className="font-telugu text-brand-muted text-lg tracking-wide ml-2">వెబ్‌సైట్ చిత్రాలు</span>
-                          </div>
-                          <span className="text-xs text-brand-brown/70 font-semibold uppercase bg-brand-beige px-3 py-1 rounded-full">{pageImages.length} active customizations</span>
+                          <h2 className="font-playfair text-xl font-bold text-brand-brown">Custom Page Image list</h2>
+                          <span className="text-xs text-brand-brown/70 font-semibold uppercase bg-white border border-brand-brown/10 px-2.5 py-1 rounded">{pageImages.filter(img => img.page === pageFilter).length} active settings</span>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          {pageImages.length === 0 ? (
-                            <div className="col-span-2 border border-dashed border-brand-brown/25 rounded-lg flex items-center justify-center p-8 text-center text-brand-muted text-sm bg-brand-beige/30">
-                              No custom images uploaded yet. Default placeholders will be loaded.
+                          {pageImages.filter(img => img.page === pageFilter).length === 0 ? (
+                            <div className="col-span-2 border border-dashed border-brand-brown/25 rounded-lg flex items-center justify-center p-6 text-center text-brand-muted text-xs bg-white">
+                              No image settings customized for this page. Defaults will be loaded.
                             </div>
                           ) : (
-                            pageImages.map((img) => (
-                              <div key={img._id} className="p-4 rounded-lg bg-white border border-brand-brown/10 glass-card flex flex-col space-y-3 shadow-sm">
-                                <div className="flex justify-between items-start">
+                            pageImages.filter(img => img.page === pageFilter).map((img) => (
+                              <div key={img._id} className="p-3.5 rounded-lg bg-white border border-brand-brown/10 flex flex-col space-y-2.5 shadow-xs">
+                                <div className="flex justify-between items-start text-xs">
                                   <div>
-                                    <h4 className="font-bold text-brand-brown text-base">{img.label}</h4>
-                                    <code className="text-xs text-brand-gold bg-brand-beige/60 px-1.5 py-0.5 rounded font-mono block mt-0.5">{img.key}</code>
+                                    <h4 className="font-bold text-brand-brown">{img.label}</h4>
+                                    <code className="text-[10px] text-brand-gold font-mono block mt-0.5">{img.key}</code>
                                   </div>
-                                  <span className="px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider bg-brand-beige border border-brand-brown/10 text-brand-brown">
-                                    {img.page}
-                                  </span>
                                 </div>
-                                <div className="aspect-video w-full rounded overflow-hidden bg-brand-beige border border-brand-brown/5">
+                                <div className="aspect-video w-full rounded overflow-hidden border border-brand-brown/5">
                                   <img src={getImageUrl(img.imageUrl)} alt={img.label} className="w-full h-full object-cover" />
                                 </div>
-                                <div className="text-[10px] text-brand-brown/50 text-right">
+                                <div className="text-[9px] text-brand-brown/50 text-right">
                                   Updated: {new Date(img.updatedAt || Date.now()).toLocaleString()}
                                 </div>
                               </div>
@@ -1328,114 +1510,127 @@ const Admin = () => {
                           )}
                         </div>
                       </div>
+
                     </div>
                   )}
 
-                  {/* TAB 5: BRANCHES */}
+                  {/* TAB 6: BRANCHES */}
                   {activeTab === 'branches' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 text-brand-brown">
-                      {/* Left list */}
-                      <div className="lg:col-span-5 flex flex-col space-y-4">
-                        <div className="flex items-center gap-2">
-                          <h2 className="font-playfair text-2xl font-bold text-brand-brown">Select Branch to Edit</h2>
-                          <span className="font-telugu text-brand-muted text-lg tracking-wide ml-2">శాఖను ఎంచుకోండి</span>
-                        </div>
-                        <div className="flex flex-col space-y-3">
-                          {branches.map(b => (
-                            <div 
-                              key={b._id} 
-                              onClick={() => handleEditBranchSelect(b)}
-                              className={`p-5 rounded-lg border cursor-pointer transition-all shadow-sm ${
-                                selectedBranch?._id === b._id 
-                                  ? 'bg-brand-beige border-brand-gold shadow-md' 
-                                  : 'bg-white border-brand-brown/10 hover:border-brand-gold/40'
-                              }`}
-                            >
-                              <div className="flex justify-between items-center text-brand-brown">
-                                <span className="font-bold text-base md:text-lg">{b.name}</span>
-                                <Edit size={16} className="text-brand-gold" />
-                              </div>
-                              <span className="text-xs text-brand-brown/70 block mt-1">Phone: {b.phone}</span>
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-brand-brown">
+                      
+                      {/* Left: Select List */}
+                      <div className="lg:col-span-4 flex flex-col space-y-3">
+                        <h2 className="font-playfair text-xl font-bold text-brand-brown mb-1">Select Branch to Edit</h2>
+                        {branches.map(b => (
+                          <div 
+                            key={b._id} 
+                            onClick={() => handleEditBranchSelect(b)}
+                            className={`p-4 rounded-lg border cursor-pointer transition-all shadow-xs ${
+                              selectedBranch?._id === b._id 
+                                ? 'bg-white border-brand-gold border-2 shadow-sm' 
+                                : 'bg-white border-brand-brown/10 hover:border-brand-gold/30'
+                            }`}
+                          >
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="font-bold text-sm">{b.name}</span>
+                              <Edit size={13} className="text-brand-gold" />
                             </div>
-                          ))}
-                        </div>
+                            <span className="text-[10px] text-brand-brown/70 block mt-0.5">Phone: {b.phone}</span>
+                          </div>
+                        ))}
                       </div>
 
-                      {/* Right Form */}
-                      <div className="lg:col-span-7">
+                      {/* Right: Edit Form */}
+                      <div className="lg:col-span-8">
                         {selectedBranch ? (
-                          <div className="bg-brand-beige border border-brand-brown/10 p-6 rounded-lg glass-card text-brand-brown shadow-sm">
-                            <h2 className="font-playfair text-xl font-bold text-brand-brown mb-4 border-b border-brand-brown/10 pb-2">
-                              Edit Details: <span className="text-brand-gold italic">{selectedBranch.name}</span>
+                          <div className="bg-white border border-brand-brown/10 p-5 rounded-lg shadow-xs text-brand-brown">
+                            <h2 className="font-playfair text-lg font-bold text-brand-brown mb-3 border-b border-brand-brown/10 pb-1.5">
+                              Branch Details: <span className="text-brand-gold italic">{selectedBranch.name}</span>
                             </h2>
-                            <form onSubmit={handleBranchSubmit} className="flex flex-col space-y-4 text-sm">
+                            <form onSubmit={handleBranchSubmit} className="flex flex-col space-y-3.5 text-xs">
                               <div className="flex flex-col space-y-1">
-                                <label className="text-xs uppercase font-bold text-brand-gold">Address *</label>
+                                <label className="font-bold text-brand-gold">Address *</label>
                                 <textarea
                                   required
                                   value={branchForm.address}
                                   onChange={(e) => setBranchForm({ ...branchForm, address: e.target.value })}
                                   rows="2"
-                                  className="w-full bg-white border border-brand-brown/20 rounded px-4 py-2.5 text-sm text-brand-brown focus:outline-none focus:border-brand-gold transition-colors shadow-sm"
+                                  className="w-full bg-white border border-brand-brown/20 rounded px-3 py-2 text-sm focus:outline-none"
                                 />
                               </div>
 
-                              <div className="grid grid-cols-2 gap-4">
+                              <div className="grid grid-cols-2 gap-3.5">
                                 <div className="flex flex-col space-y-1">
-                                  <label className="text-xs uppercase font-bold text-brand-gold">Phone Number(s) *</label>
+                                  <label className="font-bold text-brand-gold">Phone Number(s) *</label>
                                   <input
                                     type="text"
                                     required
                                     value={branchForm.phone}
                                     onChange={(e) => setBranchForm({ ...branchForm, phone: e.target.value })}
-                                    className="w-full bg-white border border-brand-brown/20 rounded px-4 py-2.5 text-sm text-brand-brown focus:outline-none focus:border-brand-gold transition-colors shadow-sm"
+                                    className="w-full bg-white border border-brand-brown/20 rounded px-3 py-2 text-sm focus:outline-none"
                                   />
                                 </div>
                                 <div className="flex flex-col space-y-1">
-                                  <label className="text-xs uppercase font-bold text-brand-gold">Opening Hours *</label>
+                                  <label className="font-bold text-brand-gold">Opening Hours *</label>
                                   <input
                                     type="text"
                                     required
                                     value={branchForm.timings}
                                     onChange={(e) => setBranchForm({ ...branchForm, timings: e.target.value })}
-                                    className="w-full bg-white border border-brand-brown/20 rounded px-4 py-2.5 text-sm text-brand-brown focus:outline-none focus:border-brand-gold transition-colors shadow-sm"
+                                    className="w-full bg-white border border-brand-brown/20 rounded px-3 py-2 text-sm focus:outline-none"
                                   />
                                 </div>
                               </div>
 
                               <div className="flex flex-col space-y-1">
-                                <label className="text-xs uppercase font-bold text-brand-gold">Google Maps Link *</label>
+                                <label className="font-bold text-brand-gold">Google Maps Link *</label>
                                 <input
                                   type="url"
                                   required
                                   value={branchForm.googleMapsLink}
                                   onChange={(e) => setBranchForm({ ...branchForm, googleMapsLink: e.target.value })}
-                                  className="w-full bg-white border border-brand-brown/20 rounded px-4 py-2.5 text-sm text-brand-brown focus:outline-none focus:border-brand-gold transition-colors shadow-sm"
+                                  className="w-full bg-white border border-brand-brown/20 rounded px-3 py-2 text-sm focus:outline-none"
                                 />
                               </div>
 
                               <div className="flex flex-col space-y-1">
-                                <label className="text-xs uppercase font-bold text-brand-gold">Branch Description</label>
+                                <label className="font-bold text-brand-gold">Branch Description</label>
                                 <textarea
                                   value={branchForm.description}
                                   onChange={(e) => setBranchForm({ ...branchForm, description: e.target.value })}
-                                  rows="3"
-                                  className="w-full bg-white border border-brand-brown/20 rounded px-4 py-2.5 text-sm text-brand-brown focus:outline-none focus:border-brand-gold transition-colors shadow-sm"
+                                  rows="2"
+                                  className="w-full bg-white border border-brand-brown/20 rounded px-3 py-2 text-sm focus:outline-none"
                                 />
+                              </div>
+
+                              {/* Branch image upload */}
+                              <div className="flex flex-col space-y-1">
+                                <label className="font-bold text-brand-gold">Upload New Branch Card Image (Optional)</label>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => setBranchImageFile(e.target.files[0])}
+                                  className="w-full bg-white border border-brand-brown/20 rounded px-3 py-1.5 text-xs"
+                                />
+                                {selectedBranch.image && (
+                                  <div className="w-20 h-12 rounded overflow-hidden border border-brand-brown/10 mt-1">
+                                    <img src={getImageUrl(selectedBranch.image)} alt="Current" className="w-full h-full object-cover" />
+                                  </div>
+                                )}
                               </div>
 
                               <div className="pt-2 flex space-x-2">
                                 <button
                                   type="submit"
                                   disabled={actionLoading}
-                                  className="flex-grow py-3 bg-brand-gold hover:bg-brand-gold/90 text-brand-lightBg font-bold rounded uppercase tracking-wider text-xs shadow-md transition-colors"
+                                  className="flex-grow py-2.5 bg-brand-gold text-brand-lightBg font-extrabold rounded uppercase tracking-wider"
                                 >
                                   {actionLoading ? 'Saving...' : 'Save Branch Details'}
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => setSelectedBranch(null)}
-                                  className="py-3 px-5 border border-brand-brown/30 hover:border-brand-brown/50 rounded text-xs uppercase tracking-wider font-semibold text-brand-brown transition-colors"
+                                  onClick={() => { setSelectedBranch(null); setBranchImageFile(null); }}
+                                  className="py-2.5 px-3 border border-brand-brown/30 rounded font-semibold text-brand-brown"
                                 >
                                   Cancel
                                 </button>
@@ -1443,11 +1638,12 @@ const Admin = () => {
                             </form>
                           </div>
                         ) : (
-                          <div className="h-full border border-dashed border-brand-brown/25 rounded-lg flex items-center justify-center p-8 text-center text-brand-muted text-sm md:text-base bg-brand-beige/30">
+                          <div className="h-full border border-dashed border-brand-brown/25 rounded-lg flex items-center justify-center p-6 text-center text-brand-muted text-xs bg-white">
                             Please select a branch from the left list to edit details.
                           </div>
                         )}
                       </div>
+
                     </div>
                   )}
 

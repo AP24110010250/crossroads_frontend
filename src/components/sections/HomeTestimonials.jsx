@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, Quote, ArrowLeft, ArrowRight } from 'lucide-react';
+import axios from 'axios';
 
 const HomeTestimonials = () => {
   const [activeIndex, setActiveIndex] = useState(0);
-  const testimonials = [
+
+  const hardcodedTestimonials = [
     {
       name: 'K. Viswanath',
       role: 'Legendary Filmmaker (Aesthetic Admirer)',
@@ -31,7 +33,30 @@ const HomeTestimonials = () => {
     }
   ];
 
+  const [testimonials, setTestimonials] = useState(hardcodedTestimonials);
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
   useEffect(() => {
+    axios.get(`${API_URL}/testimonials`)
+      .then(res => {
+        if (res.data.success && res.data.data.length > 0) {
+          // Map backend schema (comment/designation) to component fields (quote/role)
+          const mapped = res.data.data.map(item => ({
+            name: item.name,
+            role: item.designation || 'Happy Diner',
+            quote: item.comment,
+            rating: item.rating || 5
+          }));
+          setTestimonials(mapped);
+        }
+      })
+      .catch(err => {
+        console.warn('Failed to load testimonials from API, using defaults.', err.message);
+      });
+  }, []);
+
+  useEffect(() => {
+    if (testimonials.length === 0) return;
     const timer = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % testimonials.length);
     }, 6000);
@@ -47,6 +72,8 @@ const HomeTestimonials = () => {
     setActiveIndex((prev) => (prev + 1) % testimonials.length);
   };
 
+  if (testimonials.length === 0) return null;
+
   return (
     <section className="bg-brand-beige py-28 px-6 md:px-12 relative z-10 overflow-hidden border-b border-brand-brown/5">
       {/* Background graphics */}
@@ -61,7 +88,7 @@ const HomeTestimonials = () => {
 
         {/* Heading */}
         <span className="text-brand-gold font-telugu text-lg md:text-2xl font-bold mb-2">
-          సందర్శకుల సమీక్షలు — సంతృప్తికరమైన అనుభవాలు
+          సন্দర్శకుల సమీక్షలు — సంతృప్తికరమైన అనుభవాలు
         </span>
         <span className="text-brand-red uppercase tracking-[0.4em] font-bold text-xs md:text-sm">
           Guest Testimonials

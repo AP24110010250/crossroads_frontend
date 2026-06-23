@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import Navbar from '../components/sections/Navbar';
 import Footer from '../components/sections/Footer';
 import Preloader from '../components/ui/Preloader';
@@ -17,17 +18,19 @@ import HomeTestimonials from '../components/sections/HomeTestimonials';
 import HomeReservation from '../components/sections/HomeReservation';
 
 const Home = () => {
+  const location = useLocation();
+
   // Hash scroll observer
   useEffect(() => {
-    if (window.location.hash) {
-      const element = document.querySelector(window.location.hash);
+    if (location.hash) {
+      const element = document.querySelector(location.hash);
       if (element) {
         setTimeout(() => {
           element.scrollIntoView({ behavior: 'smooth' });
         }, 150);
       }
     }
-  }, []);
+  }, [location]);
 
   return (
     <SmoothScroll>

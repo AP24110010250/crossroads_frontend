@@ -122,37 +122,6 @@ const Navbar = () => {
                   {link.name}
                 </Link>
               ))}
-              <hr className="border-brand-brown/10" />
-              {isAuthenticated ? (
-                <div className="flex flex-col space-y-5">
-                  <Link 
-                    to="/admin" 
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="text-lg uppercase tracking-wider text-brand-gold font-bold flex items-center gap-2"
-                  >
-                    <User size={22} />
-                    <span>Admin Dashboard</span>
-                  </Link>
-                  <button 
-                    onClick={() => {
-                      logout();
-                      setMobileMenuOpen(false);
-                    }}
-                    className="w-full text-center py-3.5 border border-brand-red/50 hover:bg-brand-red/5 text-brand-red rounded uppercase text-sm font-bold transition-all duration-300"
-                  >
-                    Logout
-                  </button>
-                </div>
-              ) : (
-                <Link 
-                  to="/admin" 
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="text-lg uppercase tracking-wider text-brand-brown/60 hover:text-brand-red font-bold flex items-center gap-2"
-                >
-                  <User size={22} />
-                  <span>Admin Login</span>
-                </Link>
-              )}
             </div>
             
             <Link to="/#reserve" onClick={() => setMobileMenuOpen(false)}>
